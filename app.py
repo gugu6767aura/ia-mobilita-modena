@@ -26,6 +26,7 @@ def recupera_tempo_reale_seta():
             
             # Estraiamo le informazioni di ogni autobus attivo
             for bus_id, info in dati.get("corse", {}).items():
+                # Convertiamo le coordinate in numeri decimali per la mappa
                 try:
                     lat = float(info.get("lat")) / 100000.0
                     lon = float(info.get("lon")) / 100000.0
@@ -38,7 +39,7 @@ def recupera_tempo_reale_seta():
                     "Stato": info.get("stato_marcia_descrizione"),
                     "Ritardo (Min)": info.get("ritardo", 0),
                     "Prossima Fermata": info.get("prossima_fermata_descrizione"),
-                    "latitude": lat,
+                    "latitude": lat,   # Campi richiesti da Streamlit per creare le mappe
                     "longitude": lon
                 })
             return pd.DataFrame(lista_bus)
@@ -49,65 +50,7 @@ def recupera_tempo_reale_seta():
 # Carichiamo i dati all'avvio della pagina
 df_bus = recupera_tempo_reale_seta()
 
-# --- 2. CREAZIONE DELL'INTERFACCIA GRAFICA A COLONNE ---
-col1, col2 = st.columns(2)
-
-# Colonna di Sinistra: La chat intelligente
-with col1:
-    st.subheader("🤖 Chiedi all'IA di Modena")
-    api_key_input = st.text_input("Inserisci la tua API Key di Groq (gratis su ://groq.com):", type="password")
-    domanda_utente = st.text_input("Es: Ci sono bus in ritardo sulla linea 7 o la linea 11?", "")
-
-    if st.button("Invia Domanda") and domanda_utente:
-        if not api_key_input:
-            st.warning("Per favore, inserisci la tua chiave API di Groq per far funzionare l'IA.")
-        else:
-            if not df_bus.empty:
-                contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False)
-            else:
-                contesto_bus = "Nessun autobus attivo al momento."
-                
-            client = Groq(api_key=api_key_input)
-            
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"""Sei l'assistente virtuale ufficiale per la mobilità sostenibile della città di Modena. Il tuo compito è aiutare gli utenti (cittadini e studenti) a capire come muoversi in città in modo ecologico.
-Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA Modena che ti viene passata. Rispondi in italiano con un tono amichevole, giovanile e chiaro. Non inventare orari.\n\nDati in diretta:\n{contesto_bus}"""
-                    },
-                    {"role": "user", "content": domanda_utente}
-                ],
-                model="llama-3.3-70b-versatile",
-            )
-            st.info(chat_completion.choices[0].message.content)
-
-# Colonna di Destra: Il tabellone dei dati
-with col2:
-    st.subheader("📊 Tabellone Live dei Bus in Città")
-    if not df_bus.empty:
-        st.dataframe(df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]], use_container_width=True, hide_index=True)
-    else:
-        st.write("Nessun autobus attivo rilevato al momento o server SETA non raggiungibile.")
-
-# --- 3. SEZIONE IN BASSO: LA MAPPA GEOGRAFICA ---
-st.markdown("---")
-st.subheader("🗺️ Mappa Geografica dei Bus in Movimento a Modena")
-
-if not df_bus.empty:
-    df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
-    if not df_mappa.empty:
-        st.map(df_mappa, size=40)
-    else:
-        st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
-else:
-    st.write("Nessun dato geografico disponibile al momento.")
-
-
-import streamlit as st
-import pandas as pd
-
-# --- 4. AGGIUNTA DELLE PISTE CICLABILI DEL COMUNE ---
+# --- 2. FUNZIONE PER LEGGERE LE PISTE CICLABILI DEL COMUNE ---
 @st.cache_data
 def carica_ciclabili_modena():
     try:
@@ -125,7 +68,6 @@ def carica_ciclabili_modena():
             0: 'Non Specificato'
         }
         
-        # Cerchiamo di capire come il Comune chiama la via (proviamo sia STRADA che TOPONIMO)
         campo_via = 'STRADA' if 'STRADA' in df.columns else ('TOPONIMO' if 'TOPONIMO' in df.columns else None)
         
         lista_pulita = []
@@ -141,7 +83,7 @@ def carica_ciclabili_modena():
             inizio = row.get('DA_VIA', row.get('LOCALITA', 'Inizio Tratto'))
             fine = row.get('A_VIA', row.get('NOTE', 'Fine Tratto'))
             
-            # Se i campi del Comune sono vuoti o contengono codici nutili, diamo un nome leggibile
+            # Se i campi del Comune sono vuoti o contengono codici inutili, diamo un nome leggibile
             if pd.isna(inizio) or str(inizio).strip() == "" or str(inizio).isdigit():
                 inizio = "Inizio Via"
             if pd.isna(fine) or str(fine).strip() == "" or str(fine).isdigit():
@@ -162,11 +104,73 @@ def carica_ciclabili_modena():
 
 df_ciclabili = carica_ciclabili_modena()
 
+# --- 3. CREAZIONE DELL'INTERFACCIA GRAFICA A COLONNE ---
+col1, col2 = st.columns(2)
+
+# Colonna di Sinistra: La chat intelligente
+with col1:
+    st.subheader("🤖 Chiedi all'IA di Modena")
+    api_key_input = st.text_input("Inserisci la tua API Key di Groq (gratis su ://groq.com):", type="password")
+    domanda_utente = st.text_input("Es: Ci sono bus in ritardo sulla linea 7 o la linea 11?", "")
+
+    if st.button("Invia Domanda") and domanda_utente:
+        if not api_key_input:
+            st.warning("Per favore, inserisci la tua chiave API di Groq per far funzionare l'IA.")
+        else:
+            # Creiamo un riassunto dei bus senza le coordinate per darlo in pasto alla chat
+            if not df_bus.empty:
+                contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False)
+            else:
+                contesto_bus = "Nessun autobus attivo al momento."
+                
+            if not df_ciclabili.empty:
+                contesto_ciclabili = df_ciclabili.to_string(index=False)
+            else:
+                contesto_ciclabili = "Nessun dato sulle piste ciclabili disponibile."
+                
+            client = Groq(api_key=api_key_input)
+            
+            # Interrogazione del modello gratuito su Groq
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"Sei l'assistente virtuale ufficiale per la mobilità sostenibile della città di Modena. Il tuo compito è aiutare gli utenti (cittadini e studenti) a capire come muoversi in città in modo ecologico. Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA Modena e sulle piste ciclabili del Comune che ti vengono passate. Rispondi in italiano con un tono amichevole, giovanile e chiaro. Non inventare dati.\n\nBus in diretta:\n{contesto_bus}\n\nPiste Ciclabili:\n{contesto_ciclabili}"
+                    },
+                    {"role": "user", "content": domanda_utente}
+                ],
+                model="llama-3.3-70b-versatile",
+            )
+            st.info(chat_completion.choices.message.content)
+
+# Colonna di Destra: Il tabellone dei dati
+with col2:
+    st.subheader("📊 Tabellone Live dei Bus in Città")
+    if not df_bus.empty:
+        # Mostriamo all'utente solo le colonne utili da leggere (nascondiamo le coordinate GPS)
+        st.dataframe(df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]], use_container_width=True, hide_index=True)
+    else:
+        st.write("Nessun autobus attivo rilevato al momento o server SETA non raggiungibile.")
+
+# --- 4. SEZIONE IN BASSO: LA MAPPA GEOGRAFICA ---
+st.markdown("---")
+st.subheader("🗺️ Mappa Geografica dei Bus in Movimento a Modena")
+
+if not df_bus.empty:
+    # Puliamo i dati rimuovendo eventuali righe senza coordinate GPS valide
+    df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
+    if not df_mappa.empty:
+        # Genera una mappa interattiva centrata su Modena con i pallini dei bus
+        st.map(df_mappa, size=40)
+    else:
+        st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
+else:
+    st.write("Nessun dato geografico disponibile al momento.")
+
+# --- 5. SEZIONE DELLE PISTE CICLABILI ---
 st.markdown("---")
 st.subheader("🚲 Piste Ciclabili di Modena (Tabella Semplificata)")
 if not df_ciclabili.empty:
-    # Mostra la tabella ordinata con le parole in italiano corretto
     st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
 else:
-    st.info("I dati delle piste ciclabili compariranno non appena il file su GitHub sarà rinominato in ciclabili.dbf")
-corso... Verifica che il file su GitHub si chiame ciclabili.dbf")
+    st.info("I dati delle piste ciclabili compariranno non appena il file si carichera.")
