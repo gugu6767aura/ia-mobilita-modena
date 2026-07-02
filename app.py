@@ -2,6 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 from groq import Groq
+import urllib3
+
+# Disabilita i messaggi di avviso per i certificati SSL non verificati
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configurazione iniziale del sito web
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
@@ -14,14 +18,14 @@ def recupera_tempo_reale_seta():
     # URL ufficiale del feed JSON di SETA Modena
     url = "https://setaweb.it"
     try:
-        risposta = requests.get(url, timeout=10)
+        # Aggiungiamo verify=False per ignorare l'errore del certificato SSL
+        risposta = requests.get(url, timeout=10, verify=False)
         if risposta.status_code == 200:
             dati = risposta.json()
             lista_bus = []
             
             # Estraiamo le informazioni di ogni autobus attivo
             for bus_id, info in dati.get("corse", {}).items():
-                # Convertiamo le coordinate in numeri decimali per la mappa
                 try:
                     lat = float(info.get("lat")) / 100000.0
                     lon = float(info.get("lon")) / 100000.0
@@ -34,7 +38,7 @@ def recupera_tempo_reale_seta():
                     "Stato": info.get("stato_marcia_descrizione"),
                     "Ritardo (Min)": info.get("ritardo", 0),
                     "Prossima Fermata": info.get("prossima_fermata_descrizione"),
-                    "latitude": lat,   # Campi richiesti da Streamlit per creare le mappe
+                    "latitude": lat,
                     "longitude": lon
                 })
             return pd.DataFrame(lista_bus)
@@ -58,7 +62,6 @@ with col1:
         if not api_key_input:
             st.warning("Per favore, inserisci la tua chiave API di Groq per far funzionare l'IA.")
         else:
-            # Creiamo un riassunto dei bus senza le coordinate per darlo in pasto alla chat
             if not df_bus.empty:
                 contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False)
             else:
@@ -66,7 +69,6 @@ with col1:
                 
             client = Groq(api_key=api_key_input)
             
-            # Interrogazione del modello gratuito Llama 3 su Groq
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
@@ -84,7 +86,6 @@ Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA
 with col2:
     st.subheader("📊 Tabellone Live dei Bus in Città")
     if not df_bus.empty:
-        # Mostriamo all'utente solo le colonne utili da leggere (nascondiamo le coordinate GPS)
         st.dataframe(df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]], use_container_width=True, hide_index=True)
     else:
         st.write("Nessun autobus attivo rilevato al momento o server SETA non raggiungibile.")
@@ -94,10 +95,8 @@ st.markdown("---")
 st.subheader("🗺️ Mappa Geografica dei Bus in Movimento a Modena")
 
 if not df_bus.empty:
-    # Puliamo i dati rimuovendo eventuali righe senza coordinate GPS valide
     df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
     if not df_mappa.empty:
-        # Genera una mappa interattiva centrata su Modena con i pallini dei bus
         st.map(df_mappa, size=40)
     else:
         st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
