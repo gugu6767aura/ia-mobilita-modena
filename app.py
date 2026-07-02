@@ -52,32 +52,32 @@ def genera_orari_linee(linea):
     orari_festivi = []
     
     if "Linea 7" in linea:
-        # Feriale: ogni 10 minuti (passaggi ai minuti 00, 10, 20, 30, 40, 50)
+        # Feriale: ogni 10 minuti
         for ora in range(6, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 10):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
-        # Festivo: ogni 20 minuti (passaggi ai minuti 00, 20, 40)
+        # Festivo: ogni 20 minuti
         for ora in range(7, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 20):
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
                 
     elif "Linea 11" in linea:
-        # Feriale: ogni 12 minuti (passaggi ai minuti 00, 12, 24, 36, 48)
+        # Feriale: ogni 12 minuti
         for ora in range(6, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 12):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
-        # Festivo: ogni 20 minuti (passaggi ai minuti 00, 20, 40)
+        # Festivo: ogni 20 minuti
         for ora in range(7, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 20):
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
                 
     else:
-        # Altre linee urbane: passaggi regolari ai minuti 00, 15, 30, 45
+        # Altre linee: ogni 15 minuti feriali, ogni 30 festivi
         for ora in range(6, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 15):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
         for ora in range(8, 21):
-            for min_tratto in:
+            for min_tratto in range(0, 60, 30):
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
                 
     return pd.DataFrame(orari_feriali), pd.DataFrame(orari_festivi)
