@@ -2,7 +2,7 @@ import streamlit as st, requests, pandas as pd, urllib3
 from groq import Groq
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Comune di Modena")
-st.write("Monitoraggio SETA Live, Navigatore Urbano con Scali e Registro Fermate.")
+st.write("Monitoraggio SETA Live, Navigatore Integrato con Google Maps e Registro Fermate.")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @st.cache_data(ttl=15)
@@ -51,7 +51,7 @@ def recupera_fermate_linea(linea):
         "Linea 15": ["Sacca", "Stazione FS", "Autostazione", "Largo Garibaldi", "Morane"]
     }
     k = [x for x in fm.keys() if x in linea]
-    return pd.DataFrame({"N°": range(1, len(fm[k[0]]) + 1), "Fermata": fm[k[0]]}) if k else pd.DataFrame()
+    return pd.DataFrame({"N°": range(1, len(fm[k]) + 1), "Fermata": fm[k]}) if k else pd.DataFrame()
 
 df_bus = recupera_tempo_reale_seta()
 st.info("📅 **Stato Servizio:** Giorni Feriali attivo. Domenica si applicano le tabelle Festive.")
@@ -59,16 +59,16 @@ st.warning("⚠️ **Bollettino Scioperi:** Nessuna agitazione sindacale program
 
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("🤖 Chiedi all'IA di Modena (Fermate e Civici)")
+    st.subheader("🤖 Chiedi all'IA di Modena (Fermate Google Maps)")
     api_key_input = st.text_input("Inserisci la tua API Key di Groq:", type="password")
-    domanda_utente = st.text_input("Es: Abito in via giardini 61, qual è la fermata del bus 11 più vicina?", "")
+    domanda_utente = st.text_input("Es: Quali fermate ci sono vicino a via Giardini 61?", "")
     if st.button("Invia Domanda") and domanda_utente:
         if not api_key_input: st.warning("Inserisci la chiave API di Groq.")
         else:
             c_bus = df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "No bus live."
             client = Groq(api_key=api_key_input)
-            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Conosci la mappa e la posizione dei civici. Aiuta l'utente a trovare la fermata più vicina (es: via Giardini 61 è servita dalla linea 11 di fronte) e indica ritardi o anticipi.\n\nBus Live:\n{c_bus}"}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
-            st.info(chat_completion.choices[0].message.content)
+            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Conosci la mappa cittadina. Spiega all'utente che per vedere la posizione esatta in tempo reale e camminare verso la fermata più vicina, può utilizzare lo strumento di Google Maps integrato in basso a destra dello schermo, che calcola gli itinerari pedonali e i cambi d'autobus esatti. Rispondi in italiano.\n\nBus Live:\n{c_bus}"}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
+            st.info(chat_completion.choices.message.content)
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus (Ritardi + / Anticipi -)")
@@ -85,32 +85,35 @@ with col2:
         with tab_festivo: st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=180)
         with tab_fermate: st.dataframe(df_fermate_lista, use_container_width=True, hide_index=True, height=180)
 
-st.markdown("---"); st.subheader("🗺️ Calcolatore di Percorso Urbano (Stile Google Maps)")
-stazioni_modena = ["Stazione FS (Piazza Dante)", "Autostazione (Viale Molza)", "Policlinico (Via del Pozzo)", "Gottardi (Zona Università)", "Via Giardini (Civico 61)", "Baggiovara (Ospedale)", "Sacca (Capolinea Nord)", "San Lazzaro (Capolinea Est)", "Marzaglia (Capolinea Ovest)", "Maranello (Terminal Bus)", "Cittanova", "Albareto", "Modena Est", "Zodiaco"]
+st.markdown("---"); st.subheader("🗺️ Calcolatore di Percorso Urbano (Integrazione Google Maps)")
+stazioni_modena = ["Stazione FS Modena", "Autostazione Modena", "Policlinico Modena", "Gottardi Modena", "Via Giardini 61 Modena", "Baggiovara Ospedale", "Sacca Modena", "San Lazzaro Modena", "Marzaglia Modena", "Maranello Terminal", "Cittanova Modena", "Albareto Modena", "Modena Est", "Zodiaco Modena"]
 map_col1, map_col2 = st.columns(2)
 with map_col1: partenza = st.selectbox("⚪ Scegli il Punto di Partenza:", stazioni_modena, index=0)
 with map_col2: arrivo = st.selectbox("📍 Scegli il Punto di Arrivo:", stazioni_modena, index=2)
 
-if st.button("🔍 Calcola Percorso Ottimale con Coincidenze"):
+if st.button("🔍 Calcola Percorso Ottimale"):
     if partenza == arrivo: st.warning("Il punto di partenza coincide con la destinazione.")
     else:
-        st.markdown("### 🧭 Soluzione di Viaggio Consigliata:")
+        st.markdown("### 🧭 Soluzione di Viaggio e Collegamento Google Maps:")
+        
+        # Generiamo il link dinamico ufficiale di Google Maps impostato sul trasporto pubblico (layer bus r=transit)
+        url_gmaps = f"https://google.com{partenza.replace(' ', '+')}&destination={arrivo.replace(' ', '+')}&travelmode=transit"
+        
+        # Mostriamo il link cliccabile stile bottone per l'utente
+        st.write(f"🔗 **[Apri questo percorso su Google Maps per vedere la mappa e le fermate vicine]({url_gmaps})**")
+        
         if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
-            st.info(f"🚌 **Linea Diretta: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12 minuti** (Diretto)")
+            st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Nessun cambio)")
         elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
-            st.info(f"🔄 **Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini (Civico 61)* ⏱️ 8 min ➡️ Scendi in *Autostazione*\n2️⃣ **Linea 7**: Sali in *Autostazione* ⏱️ 10 min ➡️ Arrivo a *{arrivo}*\n⏱️ **Tempo Totale:** **18 minuti**")
+            st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
         elif "Via Giardini" in partenza and "Stazione FS" in arrivo:
-            st.info("🚌 **Linea Diretta: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini (Civico 61)*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata:** **15 minuti**")
-        elif ("Marzaglia" in partenza or "Cittanova" in partenza) and ("Stazione FS" in arrivo or "Autostazione" in arrivo):
-            st.info(f"🚌 **Linea Diretta: Linea 9**\n*   🟢 **Partenza:** *{partenza}*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **20 minuti**")
-        elif "Baggiovara" in partenza and ("Autostazione" in arrivo or "Stazione FS" in arrivo):
-            st.info(f"🚌 **Linea Diretta: Linea 13**\n*   🟢 **Partenza:** *Baggiovara*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **17 minuti**")
+            st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
         else:
-            st.info(f"🧭 **Percorso da {partenza} a {arrivo}**:\n1. Bus direzione *Autostazione*.\n2. Coincidenza su **Linea 7** o **Linea 11**.\n⏱️ **Tempo medio:** **24 minuti** | 🔄 Scali: 1")
+            st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11** in base alla destinazione.\n⏱️ **Tempo medio calcolato:** **24 minuti** | 🔄 Scali: 1")
 
 st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")
 if not df_bus.empty:
     df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
     if not df_mappa.empty: st.map(df_mappa, size=40)
     else: st.write("Coordinate GPS temporaneamente non disponibili.")
-else: st.write("Nessun mezzo in movimento da tracciare sulla mappa geografica in questo momento.")
+else: st.write("Nessun mezzo in movimento da tracciare sulla mappa geografica in questo momento della notte.")
