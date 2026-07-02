@@ -51,7 +51,7 @@ def recupera_fermate_linea(linea):
         "Linea 15": ["Sacca", "Stazione FS", "Autostazione", "Largo Garibaldi", "Morane"]
     }
     k = [x for x in fm.keys() if x in linea]
-    return pd.DataFrame({"N°": range(1, len(fm[k]) + 1), "Fermata": fm[k]}) if k else pd.DataFrame()
+    return pd.DataFrame({"N°": range(1, len(fm[k[0]]) + 1), "Fermata": fm[k[0]]}) if k else pd.DataFrame()
 
 df_bus = recupera_tempo_reale_seta()
 st.info("📅 **Stato Servizio:** Giorni Feriali attivo. Domenica si applicano le tabelle Festive.")
@@ -67,8 +67,8 @@ with col1:
         else:
             c_bus = df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "No bus live."
             client = Groq(api_key=api_key_input)
-            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Conosci la mappa cittadina. Spiega all'utente che per vedere la posizione esatta in tempo reale e camminare verso la fermata più vicina, può utilizzare lo strumento di Google Maps integrato in basso a destra dello schermo, che calcola gli itinerari pedonali e i cambi d'autobus esatti. Rispondi in italiano.\n\nBus Live:\n{c_bus}"}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
-            st.info(chat_completion.choices.message.content)
+            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Spiega che per camminare verso la fermata più vicina si può usare Google Maps in basso a destra dello schermo, che mostra le fermate pedonali reali. Rispondi in italiano."}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
+            st.info(chat_completion.choices[0].message.content)
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus (Ritardi + / Anticipi -)")
@@ -95,21 +95,12 @@ if st.button("🔍 Calcola Percorso Ottimale"):
     if partenza == arrivo: st.warning("Il punto di partenza coincide con la destinazione.")
     else:
         st.markdown("### 🧭 Soluzione di Viaggio e Collegamento Google Maps:")
-        
-        # Generiamo il link dinamico ufficiale di Google Maps impostato sul trasporto pubblico (layer bus r=transit)
         url_gmaps = f"https://google.com{partenza.replace(' ', '+')}&destination={arrivo.replace(' ', '+')}&travelmode=transit"
-        
-        # Mostriamo il link cliccabile stile bottone per l'utente
         st.write(f"🔗 **[Apri questo percorso su Google Maps per vedere la mappa e le fermate vicine]({url_gmaps})**")
-        
-        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
-            st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Nessun cambio)")
-        elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
-            st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
-        elif "Via Giardini" in partenza and "Stazione FS" in arrivo:
-            st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
-        else:
-            st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11** in base alla destinazione.\n⏱️ **Tempo medio calcolato:** **24 minuti** | 🔄 Scali: 1")
+        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Nessun cambio)")
+        elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
+        elif "Via Giardini" in partenza and "Stazione FS" in arrivo: st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
+        else: st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11** in base alla destinazione.\n⏱️ **Tempo medio calcolato:** **24 minuti** | 🔄 Scali: 1")
 
 st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")
 if not df_bus.empty:
