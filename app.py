@@ -10,8 +10,7 @@ def recupera_tempo_reale_seta():
     try:
         r = requests.get("https://setaweb.it", timeout=10, verify=False)
         if r.status_code == 200:
-            d = r.json()
-            lista_bus = []
+            d, lista_bus = r.json(), []
             for b_id, info in d.get("corse", {}).items():
                 try: lat, lon = float(info.get("lat")) / 100000.0, float(info.get("lon")) / 100000.0
                 except: lat, lon = None, None
@@ -46,7 +45,7 @@ def recupera_fermate_linea(linea):
         "Linea 11": ["Zodiaco", "Villaggio Giardino", "Via Giardini (Civico 61)", "Autostazione", "Stazione FS", "Sant'Anna"]
     }
     k = [x for x in fm.keys() if x in linea]
-    return pd.DataFrame({"N°": range(1, len(fm[k]) + 1), "Fermata": fm[k]}) if k else pd.DataFrame()
+    return pd.DataFrame({"N°": range(1, len(fm[k[0]]) + 1), "Fermata": fm[k[0]]}) if k else pd.DataFrame()
 
 df_bus = recupera_tempo_reale_seta()
 st.info("📅 **Stato Servizio:** Giorni Feriali attivo. Domenica si applicano le tabelle Festive.")
@@ -89,8 +88,8 @@ with map_col1:
         if partenza and arrivo:
             p_l, a_l = partenza.lower(), arrivo.lower(); st.markdown("### 🧭 Percorsi trovati:")
             if "stazione" in p_l and "policlinico" in a_l: st.info("🚌 **Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *Policlinico*\n*   ⏱️ **Durata:** 12 minuti (Diretto)")
-            elif "giardini" in p_l and "policlinico" in a_l: st.info("🔄 **Percorso con 1 Scalo Urbano**\n\n1️⃣ **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🔄 **Cambio:** Scendi in *Autostazione*\n\n2️⃣ **Linea 7** (Direzione Gottardi)\n*   🛑 **Arrivo:** *Policlinico*\n\n⏱️ **Tempo Totale:** 18 minuti")
-            elif "giardini" in p_l and "stazione" in a_l: st.info("🚌 **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata:** 15 minuti")
+            elif "giardini" in p_l and "policlinico" in a_l: st.info("🔄 **Percorso con 1 Scalo Urbano**\n\n1️⃣ **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🔄 **Cambio:** Scendi in *Autostazione*\n\n2️⃣ **Linea 7** (Direzione Gottardi)\n*   🛑 **Arrivo:** *Policlinico*\n*   ⏱️ **Tempo Totale:** 18 minuti")
+            elif "giardini" in p_l and "stazione" in a_l: st.info("🚌 **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata:** 15 minutes")
             else: st.info(f"🧭 **Percorso da {partenza} a {arrivo}**:\n1. Sali sul primo bus verso il centro (*Autostazione*).\n2. Cambia sulla **Linea 7** o sulla **Linea 11**.\n⏱️ **Tempo medio:** 22 minuti | 🔄 Scali: 1")
         else: st.warning("Compila sia la partenza che l'arrivo.")
 
