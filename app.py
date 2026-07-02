@@ -2,7 +2,7 @@ import streamlit as st, requests, pandas as pd, urllib3
 from groq import Groq
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Comune di Modena")
-st.write("Monitoraggio SETA Live, Navigatore Integrato con Google Maps e Registro Fermate.")
+st.write("Monitoraggio SETA Live, Navigatore Geografico Integrato e Registro Fermate.")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @st.cache_data(ttl=15)
@@ -59,7 +59,7 @@ st.warning("⚠️ **Bollettino Scioperi:** Nessuna agitazione sindacale program
 
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("🤖 Chiedi all'IA di Modena (Fermate Google Maps)")
+    st.subheader("🤖 Chiedi all'IA di Modena")
     api_key_input = st.text_input("Inserisci la tua API Key di Groq:", type="password")
     domanda_utente = st.text_input("Es: Quali fermate ci sono vicino a via Giardini 61?", "")
     if st.button("Invia Domanda") and domanda_utente:
@@ -67,8 +67,8 @@ with col1:
         else:
             c_bus = df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "No bus live."
             client = Groq(api_key=api_key_input)
-            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Spiega che per camminare verso la fermata più vicina si può usare Google Maps in basso a destra dello schermo, che mostra le fermate pedonali reali. Rispondi in italiano."}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
-            st.info(chat_completion.choices[0].message.content)
+            chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Spiega che l'utente può usare il Navigatore integrato a tendina sotto per vedere la mappa reale e il percorso consigliato tra le stazioni cittadine. Rispondi in italiano."}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
+            st.info(chat_completion.choices.message.content)
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus (Ritardi + / Anticipi -)")
@@ -85,24 +85,31 @@ with col2:
         with tab_festivo: st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=180)
         with tab_fermate: st.dataframe(df_fermate_lista, use_container_width=True, hide_index=True, height=180)
 
-st.markdown("---"); st.subheader("🗺️ Calcolatore di Percorso Urbano (Integrazione Google Maps)")
-stazioni_modena = ["Stazione FS Modena", "Autostazione Modena", "Policlinico Modena", "Gottardi Modena", "Via Giardini 61 Modena", "Baggiovara Ospedale", "Sacca Modena", "San Lazzaro Modena", "Marzaglia Modena", "Maranello Terminal", "Cittanova Modena", "Albareto Modena", "Modena Est", "Zodiaco Modena"]
-map_col1, map_col2 = st.columns(2)
-with map_col1: partenza = st.selectbox("⚪ Scegli il Punto di Partenza:", stazioni_modena, index=0)
-with map_col2: arrivo = st.selectbox("📍 Scegli il Punto di Arrivo:", stazioni_modena, index=2)
+st.markdown("---"); st.subheader("🗺️ Calcolatore di Percorso Urbano (Navigatore Mappa Integrato)")
+coordinate_punti = {
+    "Stazione FS Modena": {"latitude": 44.6508, "longitude": 10.9317}, "Autostazione Modena": {"latitude": 44.6477, "longitude": 10.9231},
+    "Policlinico Modena": {"latitude": 44.6366, "longitude": 10.9419}, "Gottardi Modena": {"latitude": 44.6305, "longitude": 10.9493},
+    "Via Giardini 61 Modena": {"latitude": 44.6391, "longitude": 10.9168}, "Baggiovara Ospedale": {"latitude": 44.6067, "longitude": 10.8797},
+    "Sacca Modena": {"latitude": 44.6612, "longitude": 10.9331}, "San Lazzaro Modena": {"latitude": 44.6385, "longitude": 10.9632},
+    "Marzaglia Modena": {"latitude": 44.6541, "longitude": 10.8122}, "Maranello Terminal": {"latitude": 44.5298, "longitude": 10.8661},
+    "Cittanova Modena": {"latitude": 44.6534, "longitude": 10.8415}, "Albareto Modena": {"latitude": 44.6865, "longitude": 10.9521},
+    "Modena Est": {"latitude": 44.6341, "longitude": 10.9592}, "Zodiaco Modena": {"latitude": 44.6221, "longitude": 10.9112}
+}
+st_list = list(coordinate_punti.keys()); map_col1, map_col2 = st.columns(2)
+with map_col1: partenza = st.selectbox("⚪ Scegli il Punto di Partenza:", st_list, index=0)
+with map_col2: arrivo = st.selectbox("📍 Scegli il Punto di Arrivo:", st_list, index=2)
 
 if st.button("🔍 Calcola Percorso Ottimale"):
     if partenza == arrivo: st.warning("Il punto di partenza coincide con la destinazione.")
     else:
-        st.markdown("### 🧭 Soluzione di Viaggio e Collegamento Google Maps:")
-        url_gmaps = f"https://google.com{partenza.replace(' ', '+')}&destination={arrivo.replace(' ', '+')}&travelmode=transit"
-        st.write(f"🔗 **[Apri questo percorso su Google Maps per vedere la mappa e le fermate vicine]({url_gmaps})**")
-        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Nessun cambio)")
+        df_gocce = pd.DataFrame([coordinate_punti[partenza], coordinate_punti[arrivo]])
+        st.write("### 📍 Mappa del Percorso e Fermate Ottimali (Segnaposto Rossi):"); st.map(df_gocce, size=50); st.markdown("### 🧭 Soluzione di Viaggio Dettagliata:")
+        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱ Preso in carico: **12 minuti** (Nessun cambio)")
         elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
         elif "Via Giardini" in partenza and "Stazione FS" in arrivo: st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
-        else: st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11** in base alla destinazione.\n⏱️ **Tempo medio calcolato:** **24 minuti** | 🔄 Scali: 1")
+        else: st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11** in base alla destinazione.\n⏱ **Tempo medio calcolato:** **24 minuti** | 🔄 Scali: 1")
 
-st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")
+st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus Live (SETA GPS)")
 if not df_bus.empty:
     df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
     if not df_mappa.empty: st.map(df_mappa, size=40)
