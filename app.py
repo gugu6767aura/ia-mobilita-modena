@@ -79,11 +79,9 @@ Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA
                     },
                     {"role": "user", "content": domanda_utente}
                 ],
-         model="llama-3.3-70b-versatile",
-
+                model="llama-3.3-70b-versatile",
             )
-           st.info(chat_completion.choices[0].message.content)
-
+            st.info(chat_completion.choices[0].message.content)
 
 # Colonna di Destra: Il tabellone dei dati
 with col2:
@@ -102,6 +100,10 @@ if not df_bus.empty:
     if not df_mappa.empty:
         st.map(df_mappa, size=40)
     else:
+        st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
+else:
+    st.write("Nessun dato geografico disponibile al momento.")
+
         st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
 else:
     st.write("Nessun dato geografico disponibile al momento.")
