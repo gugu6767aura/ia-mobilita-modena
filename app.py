@@ -79,7 +79,8 @@ Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA
                     },
                     {"role": "user", "content": domanda_utente}
                 ],
-                model="llama3-8b-8192",
+         model="llama-3.3-70b-versatile",
+
             )
             st.info(chat_completion.choices.message.content)
 
