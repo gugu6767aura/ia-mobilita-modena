@@ -106,24 +106,39 @@ else:
 
 import streamlit as st
 import pandas as pd
+
 # --- 4. AGGIUNTA DELLE PISTE CICLABILI DEL COMUNE ---
 @st.cache_data
 def carica_ciclabili_modena():
     try:
         from dbfread import DBF
-        # Legge il file delle ciclabili del Comune usando il nuovo sistema
+        # Legge il file delle ciclabili del Comune
         tabella = DBF('ciclabili.dbf', load=True)
         df = pd.DataFrame(iter(tabella))
-        return df.head(50)
+        
+        # Mappiamo i campi del Comune includendo l'inizio e la fine del tratto
+        mappa_colonne = {
+            'STRADA': 'Nome della Via / Tratto',
+            'DA_VIA': 'Punto di Inizio (Da)',
+            'A_VIA': 'Punto di Fine (A)',
+            'LUNGHEZZA': 'Lunghezza (Metri)',
+            'SEDE': 'Tipo di Pavimentazione'
+        }
+        
+        # Filtriamo solo le colonne che esistono nel file
+        colonne_presenti = [c for c in mappa_colonne.keys() if c in df.columns]
+        df_pulito = df[colonne_presenti].rename(columns=mappa_colonne)
+        
+        return df_pulito.head(30) # Mostriamo i primi 30 risultati
     except Exception as e:
         return pd.DataFrame()
 
 df_ciclabili = carica_ciclabili_modena()
 
 st.markdown("---")
-st.subheader("🚲 Piste Ciclabili di Modena")
+st.subheader("🚲 Piste Ciclabili di Modena (Dati Semplificati)")
 if not df_ciclabili.empty:
-    st.dataframe(df_ciclabili, use_container_width=True)
+    # Mostra la tabella ordinata con inizio e fine del percorso
+    st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
 else:
-    st.info("I dati delle piste ciclabili compariranno non appena il file su GitHub sarà rinominato in ciclabili.dbf")
-
+    st.info("Caricamento della tabella semplificata in corso... Verifica che il file su GitHub si chiame ciclabili.dbf")
