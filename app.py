@@ -52,27 +52,27 @@ def genera_orari_linee(linea):
     orari_festivi = []
     
     if "Linea 7" in linea:
-        # Feriale: passaggi ai minuti 00, 10, 20, 30, 40, 50 di ogni ora
+        # Feriale: ogni 10 minuti (passaggi ai minuti 00, 10, 20, 30, 40, 50)
         for ora in range(6, 21):
             for min_tratto in:
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
-        # Festivo: passaggi ai minuti 00, 20, 40 di ogni ora
+        # Festivo: ogni 20 minuti (passaggi ai minuti 00, 20, 40)
         for ora in range(7, 21):
             for min_tratto in:
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
                 
     elif "Linea 11" in linea:
-        # Feriale: passaggi ogni 12 minuti (00, 12, 24, 36, 48)
+        # Feriale: ogni 12 minuti (passaggi ai minuti 00, 12, 24, 36, 48)
         for ora in range(6, 21):
             for min_tratto in:
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
-        # Festivo: passaggi ogni 20 minuti
+        # Festivo: ogni 20 minuti (passaggi ai minuti 00, 20, 40)
         for ora in range(7, 21):
             for min_tratto in:
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
                 
     else:
-        # Altre linee: passaggi regolari ai minuti 00, 15, 30, 45
+        # Altre linee urbane: passaggi regolari ai minuti 00, 15, 30, 45
         for ora in range(6, 21):
             for min_tratto in:
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
