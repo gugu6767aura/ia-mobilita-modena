@@ -10,6 +10,7 @@ st.write("Sistema integrato con monitoraggio SETA, Navigatore con Scali e AI Geo
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# --- 1. FUNZIONE PER SCARICARE E CALCOLARE RITARDI/ANTICIPI LIVE ---
 @st.cache_data(ttl=15)
 def recupera_tempo_reale_seta():
     url = "https://setaweb.it"
@@ -40,25 +41,27 @@ def recupera_tempo_reale_seta():
         pass
     return pd.DataFrame()
 
+# --- 2. DATABASE COMPLETO DELLE TABELLE ORARIE PROGRAMMATE ---
 def genera_orari_linee(linea):
     orari_feriali, orari_festivi = [], []
     if "Linea 7" in linea:
         for ora in range(6, 21):
-            for m in: orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Stazione FS / Policlinico"})
+            for m in range(0, 60, 10): orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Stazione FS / Policlinico"})
         for ora in range(7, 21):
-            for m in: orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Stazione FS / Policlinico"})
+            for m in range(0, 60, 20): orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Stazione FS / Policlinico"})
     elif "Linea 11" in linea:
         for ora in range(6, 21):
-            for m in: orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Autostazione / Stazione FS"})
+            for m in range(0, 60, 12): orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Autostazione / Stazione FS"})
         for ora in range(7, 21):
-            for m in: orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Autostazione / Stazione FS"})
+            for m in range(0, 60, 20): orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Autostazione / Stazione FS"})
     else:
         for ora in range(6, 21):
-            for m in: orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Centro Città"})
+            for m in range(0, 60, 15): orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Centro Città"})
         for ora in range(8, 21):
-            for m in: orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Centro Città"})
+            for m in range(0, 60, 30): orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{m:02d}", "Fermata": "Centro Città"})
     return pd.DataFrame(orari_feriali), pd.DataFrame(orari_festivi)
 
+# --- 3. FUNZIONE PER LEGGERE LE PISTE CICLABILI DEL COMUNE ---
 @st.cache_data
 def carica_ciclabili_modena():
     try:
@@ -124,7 +127,7 @@ with map_col1:
     if st.button("🔍 Calcola Percorso con Bus e Scali"):
         if partenza and arrivo:
             p_l, a_l = partenza.lower(), arrivo.lower()
-            st.markdown("### 🧭 Percorsi trovati:")
+            st.markdown("### 🧭 Percorsi trouvati:")
             if "stazione" in p_l and "policlinico" in a_l: st.info("🚌 **Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** Sali alla fermata *Stazione FS*\n*   🛑 **Arrivo:** Scendi alla fermata *Policlinico*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Diretto, nessun cambio)")
             elif "giardini" in p_l and "policlinico" in a_l: st.info("🔄 **Percorso con 1 Scalo Urbano**\n\n1️⃣ **Prendi la Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** Sali alla fermata *Via Giardini / Civico 61*\n*   ⏱️ **Tempo:** 8 minuti\n*   🔄 **Cambio:** Scendi in *Autostazione*\n\n2️⃣ **Sali sulla Linea 7** (Direzione Gottardi)\n*   🔄 **Coincidenza:** Sali in Autostazione sulla *Linea 7*\n*   ⏱️ **Tempo:** 10 minuti\n*   🛑 **Arrivo:** Scendi a *Policlinico*\n\n⏱️ **Tempo di Viaggio Totale:** **18 minuti**")
             elif "giardini" in p_l and "stazione" in a_l: st.info("🚌 **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** Sali alla fermata *Via Giardini / Civico 61*\n*   🛑 **Arrivo:** Scendi al capolinea *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti** (Diretto)")
@@ -142,5 +145,4 @@ else: st.write("Nessun mezzo in movimento da tracciare sulla mappa in questo mom
 
 st.markdown("---")
 st.subheader("🚲 Piste Ciclabili di Modena (Tabella Semplificata)")
-if not df_ciclabili.empty: st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
-else: st.info("File delle piste ciclabili in caricamento.")
+
