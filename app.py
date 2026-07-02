@@ -2,7 +2,7 @@ import streamlit as st, requests, pandas as pd, urllib3
 from groq import Groq
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Comune di Modena")
-st.write("Monitoraggio SETA, Navigatore Urbano e Registro delle Fermate.")
+st.write("Monitoraggio SETA Live, Navigatore Urbano con Scali e Registro Fermate.")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @st.cache_data(ttl=15)
@@ -35,14 +35,20 @@ def genera_orari_linee(linea):
 
 def recupera_fermate_linea(linea):
     fm = {
-        "Linea 1": ["Reggio Emilia", "Frizzi", "Breda", "San Cataldo", "Autostazione", "Stazione FS", "Marzaglia"],
-        "Linea 2": ["Gattaglio", "D'Avia", "Morane", "Autostazione", "Stazione FS", "San Lazzaro"],
-        "Linea 3": ["Maranello", "Formigine", "Baggiovara", "Giardini", "Autostazione", "Stazione FS", "Vaciglio"],
-        "Linea 4": ["Latte Tigre", "Sacca", "Suore", "Emilia Ovest", "Autostazione", "Stazione FS", "Via Caduti in Guerra"],
-        "Linea 5": ["Sacca", "Gramsci", "Stazione FS", "Autostazione", "Centro Storico", "Modena Est", "San Donnino"],
-        "Linea 7": ["Gottardi", "Università", "Policlinico", "Largo Garibaldi", "Stazione FS", "Autostazione", "Gramsci"],
-        "Linea 9": ["Marzaglia", "Cittanova", "Fiera", "Emilia Ovest", "Autostazione", "Stazione FS"],
-        "Linea 11": ["Zodiaco", "Villaggio Giardino", "Via Giardini (Civico 61)", "Autostazione", "Stazione FS", "Sant'Anna"]
+        "Linea 1": ["Reggio Emilia", "Frizzi", "Breda", "San Cataldo", "Autostazione", "Stazione FS", "Caduti in Guerra", "Emilia Est", "Marzaglia"],
+        "Linea 2": ["Gattaglio", "D'Avia", "Morane", "Amendola", "Autostazione", "Stazione FS", "Natale Bruni", "Re Storchi", "San Lazzaro"],
+        "Linea 3": ["Maranello", "Formigine", "Baggiovara", "Giardini", "Direzionale 70", "Autostazione", "Stazione FS", "Vaciglio"],
+        "Linea 4": ["Latte Tigre", "Sacca", "Suore", "Emilia Ovest", "Autostazione", "Stazione FS", "Largo Garibaldi", "Via Caduti in Guerra"],
+        "Linea 5": ["Sacca", "Gramsci", "Stazione FS", "Autostazione", "Centro Storico", "Largo Garibaldi", "Modena Est", "San Donnino"],
+        "Linea 7": ["Gottardi", "Università", "Policlinico", "Largo Garibaldi", "Stazione FS", "Piazza Matteotti", "Autostazione", "Gramsci"],
+        "Linea 8": ["Gottardi", "Università", "Policlinico", "Largo Garibaldi", "Autostazione", "Viale Corassori", "Cognento"],
+        "Linea 9": ["Marzaglia", "Cittanova", "Fiera", "Emilia Ovest", "Autostazione", "Stazione FS", "Monte Kosica"],
+        "Linea 10": ["Albareto", "Gramsci", "Stazione FS", "Autostazione", "Viale Corassori", "Cognento"],
+        "Linea 11": ["Zodiaco", "Villaggio Giardino", "Via Giardini (Civico 61)", "Direzionale 70", "Autostazione", "Stazione FS", "Sant'Anna"],
+        "Linea 12": ["Sacca", "Gramsci", "Stazione FS", "Autostazione", "Largo Garibaldi", "Vignolese", "San Donnino"],
+        "Linea 13": ["Baggiovara Ospedale", "Giardini", "Autostazione", "Stazione FS"],
+        "Linea 14": ["Stazione FS", "Piazza Matteotti", "Autostazione", "Via Luosi"],
+        "Linea 15": ["Sacca", "Stazione FS", "Autostazione", "Largo Garibaldi", "Morane"]
     }
     k = [x for x in fm.keys() if x in linea]
     return pd.DataFrame({"N°": range(1, len(fm[k[0]]) + 1), "Fermata": fm[k[0]]}) if k else pd.DataFrame()
@@ -69,7 +75,7 @@ with col2:
     if not df_bus.empty: st.dataframe(df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]], use_container_width=True, hide_index=True)
     else: st.write("Nessun autobus attivo al momento (servizio notturno terminato o ridotto).")
     st.write(""); st.subheader("📅 Libretto Orario e Registro Fermate")
-    opzioni_linee = ["Linea 1", "Linea 2", "Linea 3", "Linea 4", "Linea 5", "Linea 7", "Linea 9", "Linea 11"]
+    opzioni_linee = ["Linea 1", "Linea 2", "Linea 3", "Linea 4", "Linea 5", "Linea 7", "Linea 8", "Linea 9", "Linea 10", "Linea 11", "Linea 12", "Linea 13", "Linea 14", "Linea 15"]
     linea_selezionata = st.selectbox("Scegli una linea:", opzioni_linee)
     if linea_selezionata:
         df_feriale, df_festivo = genera_orari_linee(linea_selezionata)
@@ -80,22 +86,31 @@ with col2:
         with tab_fermate: st.dataframe(df_fermate_lista, use_container_width=True, hide_index=True, height=180)
 
 st.markdown("---"); st.subheader("🗺️ Calcolatore di Percorso Urbano (Stile Google Maps)")
+stazioni_modena = ["Stazione FS (Piazza Dante)", "Autostazione (Viale Molza)", "Policlinico (Via del Pozzo)", "Gottardi (Zona Università)", "Via Giardini (Civico 61)", "Baggiovara (Ospedale)", "Sacca (Capolinea Nord)", "San Lazzaro (Capolinea Est)", "Marzaglia (Capolinea Ovest)", "Maranello (Terminal Bus)", "Cittanova", "Albareto", "Modena Est", "Zodiaco"]
 map_col1, map_col2 = st.columns(2)
-with map_col1:
-    partenza = st.text_input("⚪ Da dove vuoi partire?", placeholder="Es: Stazione FS Modena")
-    arrivo = st.text_input("📍 Dove vuoi arrivare?", placeholder="Es: Policlinico di Modena")
-    if st.button("🔍 Calcola Percorso"):
-        if partenza and arrivo:
-            p_l, a_l = partenza.lower(), arrivo.lower(); st.markdown("### 🧭 Percorsi trovati:")
-            if "stazione" in p_l and "policlinico" in a_l: st.info("🚌 **Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *Policlinico*\n*   ⏱️ **Durata:** 12 minuti (Diretto)")
-            elif "giardini" in p_l and "policlinico" in a_l: st.info("🔄 **Percorso con 1 Scalo Urbano**\n\n1️⃣ **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🔄 **Cambio:** Scendi in *Autostazione*\n\n2️⃣ **Linea 7** (Direzione Gottardi)\n*   🛑 **Arrivo:** *Policlinico*\n*   ⏱️ **Tempo Totale:** 18 minuti")
-            elif "giardini" in p_l and "stazione" in a_l: st.info("🚌 **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini / Civico 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata:** 15 minutes")
-            else: st.info(f"🧭 **Percorso da {partenza} a {arrivo}**:\n1. Sali sul primo bus verso il centro (*Autostazione*).\n2. Cambia sulla **Linea 7** o sulla **Linea 11**.\n⏱️ **Tempo medio:** 22 minuti | 🔄 Scali: 1")
-        else: st.warning("Compila sia la partenza che l'arrivo.")
+with map_col1: partenza = st.selectbox("⚪ Scegli il Punto di Partenza:", stazioni_modena, index=0)
+with map_col2: arrivo = st.selectbox("📍 Scegli il Punto di Arrivo:", stazioni_modena, index=2)
+
+if st.button("🔍 Calcola Percorso Ottimale con Coincidenze"):
+    if partenza == arrivo: st.warning("Il punto di partenza coincide con la destinazione.")
+    else:
+        st.markdown("### 🧭 Soluzione di Viaggio Consigliata:")
+        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
+            st.info(f"🚌 **Linea Diretta: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12 minuti** (Diretto)")
+        elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo):
+            st.info(f"🔄 **Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini (Civico 61)* ⏱️ 8 min ➡️ Scendi in *Autostazione*\n2️⃣ **Linea 7**: Sali in *Autostazione* ⏱️ 10 min ➡️ Arrivo a *{arrivo}*\n⏱️ **Tempo Totale:** **18 minuti**")
+        elif "Via Giardini" in partenza and "Stazione FS" in arrivo:
+            st.info("🚌 **Linea Diretta: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini (Civico 61)*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata:** **15 minuti**")
+        elif ("Marzaglia" in partenza or "Cittanova" in partenza) and ("Stazione FS" in arrivo or "Autostazione" in arrivo):
+            st.info(f"🚌 **Linea Diretta: Linea 9**\n*   🟢 **Partenza:** *{partenza}*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **20 minuti**")
+        elif "Baggiovara" in partenza and ("Autostazione" in arrivo or "Stazione FS" in arrivo):
+            st.info(f"🚌 **Linea Diretta: Linea 13**\n*   🟢 **Partenza:** *Baggiovara*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **17 minuti**")
+        else:
+            st.info(f"🧭 **Percorso da {partenza} a {arrivo}**:\n1. Bus direzione *Autostazione*.\n2. Coincidenza su **Linea 7** o **Linea 11**.\n⏱️ **Tempo medio:** **24 minuti** | 🔄 Scali: 1")
 
 st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")
 if not df_bus.empty:
     df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
     if not df_mappa.empty: st.map(df_mappa, size=40)
-    else: st.write("Coordinate GPS non disponibili.")
+    else: st.write("Coordinate GPS temporaneamente non disponibili.")
 else: st.write("Nessun mezzo in movimento da tracciare sulla mappa geografica in questo momento.")
