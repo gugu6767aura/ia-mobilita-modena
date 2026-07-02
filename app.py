@@ -82,7 +82,8 @@ Basati SOLO ed esclusivamente sui dati della tabella in tempo reale dei bus SETA
          model="llama-3.3-70b-versatile",
 
             )
-            st.info(chat_completion.choices.message.content)
+           st.info(chat_completion.choices[0].message.content)
+
 
 # Colonna di Destra: Il tabellone dei dati
 with col2:
