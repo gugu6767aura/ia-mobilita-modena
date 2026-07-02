@@ -170,31 +170,33 @@ with map_col1:
             st.markdown("### 🧭 Percorsi trovati:")
             if "stazione" in p_l and "policlinico" in a_l:
                 st.info("🚌 **Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** Sali alla fermata *Stazione FS*\n*   🛑 **Arrivo:** Scendi alla fermata *Policlinico*\n*   ⏱️ **Durata del viaggio:** **12 minuti** (Diretto, nessun cambio)")
-            elif "giardini" in p_l and "policlinico" in a_l:
-                st.info("🔄 **Percorso con 1 Scalo Urbano**\n\n1️⃣ **Prendi la Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** Sali alla fermata *Via Giardini / Civico 61*\n*   ⏱️ **Tempo:** 8 minuti\n*   🔄 **Cambio:** Scendi in *Autostazione*\n\n2️⃣ **Sali sulla Linea 7** (Direzione Gottardi)\n*   🔄 **Coincidenza:** Sali in Autostazione sulla *Linea 7*\n*   ⏱️ **Tempo:** 10 minuti\n*   🛑 **Arrivo:** Scendi a *Policlinico*\n\n⏱️ **Tempo di Viaggio Totale:** **18 minuti**")
-            elif "giardini" in p_l and "stazione" in a_l:
-                st.info("🚌 **Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** Sali alla fermata *Via Giardini / Civico 61*\n*   🛑 **Arrivo:** Scendi al capolinea *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti** (Diretto)")
-            else:
-                st.info(f"🧭 **Percorso consigliato da {partenza} a {arrivo}**:\n1. Sali sul primo bus verso il centro (*Autostazione*).\n2. Cambia sulla **Linea 7** (per Policlinico) o sulla **Linea 11** (per zona Giardini/Sud).\n⏱️ **Tempo medio stimato:** **22 minuti** | 🔄 Scali: 1")
-        else:
-            st.warning("Compila sia il punto di partenza che il punto di arrivo.")
-
-with map_col2:
-    st.write("### 📅 Libretto Orario Interattivo delle Linee")
-    opzioni_linee = ["Linea 1", "Linea 2", "Linea 3", "Linea 4", "Linea 5", "Linea 7", "Linea 9", "Linea 11"]
-    linea_selezionata = st.selectbox("Scegli una linea per caricare gli orari programmati:", opzioni_linee)
+               linea_selezionata = st.selectbox("Scegli una linea per caricare gli orari programmati:", opzioni_linee)
+    
     if linea_selezionata:
-df_feriale, df_festivo = genera_orari_linee(linea_selezionata)
-tab_feriale, tab_festivo = st.tabs(["💼 Feriali (Lun-Sat)", "🎉 Festivi (Domeniche)"])
-with tab_feriale: st.dataframe(df_feriale, use_container_width=True, hide_index=True, height=180)
-  with tab_festivo: st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=180)
-    st.markdown("---")
-st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")if not df_bus.empty:
-df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
-if not df_mappa.empty: st.map(df_mappa, size=40)
-  else: st.write("Coordinate GPS temporaneamente non disponibili.")
-    else: st.write("Nessun mezzo in movimento da tracciare sulla mappa in questo momento.")
+        df_feriale, df_festivo = genera_orari_linee(linea_selezionata)
+        tab_feriale, tab_festivo = st.tabs(["💼 Feriali (Lun-Sat)", "🎉 Festivi (Domeniche)"])
+        with tab_feriale: 
+            st.dataframe(df_feriale, use_container_width=True, hide_index=True, height=180)
+        with tab_festivo: 
+            st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=180)
+
+# Mappa geografica
+st.markdown("---")
+st.subheader("🗺️ Posizione Geografica dei Bus in Tempo Reale")
+if not df_bus.empty:
+    df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
+    if not df_mappa.empty: 
+        st.map(df_mappa, size=40)
+    else: 
+        st.write("Coordinate GPS temporaneamente non disponibili.")
+else: 
+    st.write("Nessun mezzo in movimento da tracciare sulla mappa in questo momento.")
+
+# Sezione piste ciclabili
 st.markdown("---")
 st.subheader("🚲 Piste Ciclabili di Modena (Tabella Semplificata)")
-if not df_ciclabili.empty: st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
-  else: st.info("File delle piste ciclabili in caricamento.")
+if not df_ciclabili.empty: 
+    st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
+else: 
+    st.info("File delle piste ciclabili in caricamento.")
+ caricamento.")
