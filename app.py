@@ -112,33 +112,61 @@ import pandas as pd
 def carica_ciclabili_modena():
     try:
         from dbfread import DBF
-        # Legge il file delle ciclabili del Comune
+        # Legge il database ufficiale del Comune di Modena
         tabella = DBF('ciclabili.dbf', load=True)
         df = pd.DataFrame(iter(tabella))
         
-        # Mappiamo i campi del Comune includendo l'inizio e la fine del tratto
-        mappa_colonne = {
-            'STRADA': 'Nome della Via / Tratto',
-            'DA_VIA': 'Punto di Inizio (Da)',
-            'A_VIA': 'Punto di Fine (A)',
-            'LUNGHEZZA': 'Lunghezza (Metri)',
-            'SEDE': 'Tipo di Pavimentazione'
+        # Dizionario per tradurre i codici numerici della pavimentazione in parole reali
+        dizionario_materiali = {
+            1: 'Asfalto',
+            2: 'Autobloccanti / Betonella',
+            3: 'Ghiaia / Sterrato',
+            4: 'Elementi Lapidei / Pietra',
+            0: 'Non Specificato'
         }
         
-        # Filtriamo solo le colonne che esistono nel file
-        colonne_presenti = [c for c in mappa_colonne.keys() if c in df.columns]
-        df_pulito = df[colonne_presenti].rename(columns=mappa_colonne)
+        # Cerchiamo di capire come il Comune chiama la via (proviamo sia STRADA che TOPONIMO)
+        campo_via = 'STRADA' if 'STRADA' in df.columns else ('TOPONIMO' if 'TOPONIMO' in df.columns else None)
         
-        return df_pulito.head(30) # Mostriamo i primi 30 risultati
+        lista_pulita = []
+        for index, row in df.iterrows():
+            via = row.get(campo_via, 'Via non specificata')
+            lunghezza = row.get('LUNGHEZZA', 0)
+            
+            # Leggiamo il codice numerico e lo traduciamo usando il nostro dizionario
+            codice_pav = row.get('SEDE', 0)
+            materiale = dizionario_materiali.get(int(codice_pav) if pd.notnull(codice_pav) else 0, 'Asfalto / Cemento')
+            
+            # Recuperiamo l'inizio e la fine provando i veri nomi dei campi del Comune
+            inizio = row.get('DA_VIA', row.get('LOCALITA', 'Inizio Tratto'))
+            fine = row.get('A_VIA', row.get('NOTE', 'Fine Tratto'))
+            
+            # Se i campi del Comune sono vuoti o contengono codici nutili, diamo un nome leggibile
+            if pd.isna(inizio) or str(inizio).strip() == "" or str(inizio).isdigit():
+                inizio = "Inizio Via"
+            if pd.isna(fine) or str(fine).strip() == "" or str(fine).isdigit():
+                fine = "Fine Via"
+                
+            lista_pulita.append({
+                'Nome della Via / Tratto': via,
+                'Punto di Inizio': inizio,
+                'Punto di Fine': fine,
+                'Lunghezza (Metri)': int(float(lunghezza)) if pd.notnull(lunghezza) else 0,
+                'Materiale Fondo': materiale
+            })
+            
+        df_finito = pd.DataFrame(lista_pulita)
+        return df_finito.head(40) # Mostriamo le prime 40 vie principali per ordine
     except Exception as e:
         return pd.DataFrame()
 
 df_ciclabili = carica_ciclabili_modena()
 
 st.markdown("---")
-st.subheader("🚲 Piste Ciclabili di Modena (Dati Semplificati)")
+st.subheader("🚲 Piste Ciclabili di Modena (Tabella Semplificata)")
 if not df_ciclabili.empty:
-    # Mostra la tabella ordinata con inizio e fine del percorso
+    # Mostra la tabella ordinata con le parole in italiano corretto
     st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
 else:
-    st.info("Caricamento della tabella semplificata in corso... Verifica che il file su GitHub si chiame ciclabili.dbf")
+    st.info("I dati delle piste ciclabili compariranno non appena il file su GitHub sarà rinominato in ciclabili.dbf")
+corso... Verifica che il file su GitHub si chiame ciclabili.dbf")
