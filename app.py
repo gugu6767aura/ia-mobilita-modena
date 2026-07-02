@@ -106,17 +106,24 @@ else:
 
 import streamlit as st
 import pandas as pd
-from simpledbf import SimpleDbf
+# --- 4. AGGIUNTA DELLE PISTE CICLABILI DEL COMUNE ---
+@st.cache_data
+def carica_ciclabili_modena():
+    try:
+        from dbfread import DBF
+        # Legge il file delle ciclabili del Comune usando il nuovo sistema
+        tabella = DBF('ciclabili.dbf', load=True)
+        df = pd.DataFrame(iter(tabella))
+        return df.head(50)
+    except Exception as e:
+        return pd.DataFrame()
 
-st.subheader("🚲 Mappa delle Piste Ciclabili di Modena")
+df_ciclabili = carica_ciclabili_modena()
 
-try:
-    # Legge il file delle ciclabili del Comune scaricato prima
-    dbf = SimpleDbf('ciclabili.dbf')
-    df_ciclabili = dbf.to_dataframe()
-    
-    # Mostra la tabella delle ciclabili sullo schermo
-    st.dataframe(df_ciclabili.head(50), use_container_width=True)
-except Exception as e:
-    st.write("Carica il file ciclabili.dbf su GitHub per vedere i dati.")
+st.markdown("---")
+st.subheader("🚲 Piste Ciclabili di Modena")
+if not df_ciclabili.empty:
+    st.dataframe(df_ciclabili, use_container_width=True)
+else:
+    st.info("I dati delle piste ciclabili compariranno non appena il file su GitHub sarà rinominato in ciclabili.dbf")
 
