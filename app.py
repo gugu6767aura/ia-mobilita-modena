@@ -50,7 +50,8 @@ def recupera_tempo_reale_seta():
 df_bus = recupera_tempo_reale_seta()
 
 # --- 2. CREAZIONE DELL'INTERFACCIA GRAFICA A COLONNE ---
-col1, col2 = st.columns()
+col1, col2 = st.columns([1, 1])
+
 
 # Colonna di Sinistra: La chat intelligente
 with col1:
