@@ -19,7 +19,12 @@ def recupera_tempo_reale_seta():
     try:
         risposta = requests.get(url, timeout=10, verify=False)
         if risposta.status_code == 200:
-            dati = risposta.json()
+            # Controllo di sicurezza: se il testo è vuoto o non è un JSON valido, usciamo puliti
+            try:
+                dati = risposta.json()
+            except:
+                return pd.DataFrame()
+                
             lista_bus = []
             for bus_id, info in dati.get("corse", {}).items():
                 try:
@@ -39,7 +44,7 @@ def recupera_tempo_reale_seta():
                 })
             return pd.DataFrame(lista_bus)
     except Exception as e:
-        st.error(f"Errore nel collegamento ai server live di SETA: {e}")
+        pass # Ignoriamo gli errori di connessione notturni per non mostrare schermate rosse
     return pd.DataFrame()
 
 # Carichiamo i dati all'avvio della pagina
@@ -73,8 +78,6 @@ def carica_ciclabili_modena():
             inizio = row.get('DA_VIA', '')
             fine = row.get('A_VIA', '')
             
-            # --- FILTRO INTELLIGENTE ---
-            # Se mancano i dati reali sul nome, sull'inizio o sulla fine, saltiamo questa riga
             if pd.isna(via) or str(via).strip() == "" or str(via).isdigit():
                 continue
             if pd.isna(inizio) or str(inizio).strip() == "" or str(inizio).isdigit():
@@ -91,7 +94,6 @@ def carica_ciclabili_modena():
             })
             
         df_finito = pd.DataFrame(lista_pulita)
-        # Ordiniamo la tabella partendo dalle piste ciclabili più lunghe della città
         if not df_finito.empty:
             df_finito = df_finito.sort_values(by='Lunghezza (Metri)', ascending=False)
         return df_finito.head(30)
@@ -106,7 +108,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("🤖 Chiedi all'IA di Modena")
     api_key_input = st.text_input("Inserisci la tua API Key di Groq (gratis su ://groq.com):", type="password")
-    domanda_utente = st.text_input("Es: Quali sono le piste ciclabili più lunghe a Modena?", "")
+    domanda_utente = st.text_input("Es: Ci sono bus in ritardo o qual è la ciclabile più lunga?", "")
 
     if st.button("Invia Domanda") and domanda_utente:
         if not api_key_input:
@@ -115,7 +117,7 @@ with col1:
             if not df_bus.empty:
                 contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False)
             else:
-                contesto_bus = "Nessun autobus attivo al momento."
+                contesto_bus = "Nessun autobus attivo al momento (servizio notturno terminato o server SETA spento). I bus riprenderanno le corse domattina alle 06:00."
                 
             if not df_ciclabili.empty:
                 contesto_ciclabili = df_ciclabili.to_string(index=False)
@@ -128,14 +130,13 @@ with col1:
                 messages=[
                     {
                         "role": "system",
-                        "content": f"Sei l'assistente virtuale ufficiale per la mobilità sostenibile della città di Modena. Rispondi in italiano con un tono amichevole e chiaro. Basati SOLO sui dati forniti.\n\nBus in diretta:\n{contesto_bus}\n\nPiste Ciclabili:\n{contesto_ciclabili}"
+                        "content": f"Sei l'assistente virtuale ufficiale per la mobilità sostenibile della città di Modena. Rispondi in italiano con un tono amichevole, giovanile e chiaro. Se l'utente ti chiede gli orari futuri di domani o se il tabellone è vuoto perché è notte, spiega con cortesia che il servizio live riprenderà alle 06:00 e consiglia di consultare i libretti orari sul sito ufficiale SETA (setaweb.it). Basati solo sui dati forniti.\n\nBus in diretta:\n{contesto_bus}\n\nPiste Ciclabili:\n{contesto_ciclabili}"
                     },
                     {"role": "user", "content": domanda_utente}
                 ],
                 model="llama-3.3-70b-versatile",
             )
             st.info(chat_completion.choices[0].message.content)
-
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus in Città")
