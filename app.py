@@ -52,27 +52,22 @@ def genera_orari_linee(linea):
     orari_festivi = []
     
     if "Linea 7" in linea:
-        # Feriale: ogni 10 minuti
         for ora in range(6, 21):
             for min_tratto in range(0, 60, 10):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
-        # Festivo: ogni 20 minuti
         for ora in range(7, 21):
             for min_tratto in range(0, 60, 20):
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
                 
     elif "Linea 11" in linea:
-        # Feriale: ogni 12 minuti
         for ora in range(6, 21):
             for min_tratto in range(0, 60, 12):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
-        # Festivo: ogni 20 minuti
         for ora in range(7, 21):
             for min_tratto in range(0, 60, 20):
                 orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
                 
     else:
-        # Altre linee: ogni 15 minuti feriali, ogni 30 festivi
         for ora in range(6, 21):
             for min_tratto in range(0, 60, 15):
                 orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
@@ -155,7 +150,7 @@ with col1:
                 ],
                 model="llama-3.3-70b-versatile",
             )
-  st.info(chat_completion.choices[0].message.content)
+            st.info(chat_completion.choices[0].message.content)
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus in Città")
