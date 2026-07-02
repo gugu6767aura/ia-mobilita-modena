@@ -134,7 +134,8 @@ with col1:
                 ],
                 model="llama-3.3-70b-versatile",
             )
-            st.info(chat_completion.choices.message.content)
+            st.info(chat_completion.choices[0].message.content)
+
 
 with col2:
     st.subheader("📊 Tabellone Live dei Bus in Città")
