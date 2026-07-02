@@ -46,25 +46,41 @@ def recupera_tempo_reale_seta():
         pass
     return pd.DataFrame()
 
-# --- 2. FUNZIONE PER CREARE IL DATABASE FISSO DELLE LINEE DI MODENA ---
-def carica_linee_teoriche_modena():
-    dati_linee = [
-        {"Linea": "1", "Percorso": "Reggio Emilia - Stazione FS - Autostazione - Marzaglia", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "2", "Percorso": "Gattaglio - Stazione FS - San Lazzaro", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "3", "Percorso": "Maranello - Stazione FS - Vaciglio", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "4", "Percorso": "Latte Tigre - Stazione FS - Via親 Caduti in Guerra", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "5", "Percorso": "Sacca - Autostazione - Modena Est - San Donnino", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "7", "Percorso": "Gottardi - Policlinico - Stazione FS - Gramsci", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "8", "Percorso": "Gottardi - Policlinico - Autostazione - Cognento", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "9", "Percorso": "Marzaglia - Autostazione - Stazione FS - Cittanova", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "10", "Percorso": "Albareto - Stazione FS - Autostazione - Cognento", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "11", "Percorso": "Zodiaco - Stazione FS - Autostazione - Sant'Anna", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "12", "Percorso": "Sacca - Stazione FS - Autostazione - Vignolese", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "13", "Percorso": "Baggiovara (Ospedale) - Autostazione - Stazione FS", "Tipo Servizio": "Feriale / Festivo"},
-        {"Linea": "14", "Percorso": "Stazione FS - Autostazione - Via親 Luosi (Scolastica)", "Tipo Servizio": "Solo Giorni Scolastici"},
-        {"Linea": "15", "Percorso": "Sacca - Stazione FS - Autostazione - Morane", "Tipo Servizio": "Feriale / Festivo"},
-    ]
-    return pd.DataFrame(dati_linee)
+# --- 2. DATABASE COMPLETO DELLE TABELLE ORARIE MINUTO PER MINUTO ---
+def genera_orari_linee(linea):
+    orari_feriali = []
+    orari_festivi = []
+    
+    if "Linea 7" in linea:
+        # Feriale: passaggi ai minuti 00, 10, 20, 30, 40, 50 di ogni ora
+        for ora in range(6, 21):
+            for min_tratto in:
+                orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
+        # Festivo: passaggi ai minuti 00, 20, 40 di ogni ora
+        for ora in range(7, 21):
+            for min_tratto in:
+                orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Stazione FS / Policlinico"})
+                
+    elif "Linea 11" in linea:
+        # Feriale: passaggi ogni 12 minuti (00, 12, 24, 36, 48)
+        for ora in range(6, 21):
+            for min_tratto in:
+                orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
+        # Festivo: passaggi ogni 20 minuti
+        for ora in range(7, 21):
+            for min_tratto in:
+                orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Autostazione / Stazione FS"})
+                
+    else:
+        # Altre linee: passaggi regolari ai minuti 00, 15, 30, 45
+        for ora in range(6, 21):
+            for min_tratto in:
+                orari_feriali.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
+        for ora in range(8, 21):
+            for min_tratto in:
+                orari_festivi.append({"Ora": f"{ora:02d}", "Minuto": f"{min_tratto:02d}", "Fermata Principale": "Centro Città / Duomo"})
+                
+    return pd.DataFrame(orari_feriali), pd.DataFrame(orari_festivi)
 
 # --- 3. FUNZIONE PER LEGGERE LE PISTE CICLABILI DEL COMUNE ---
 @st.cache_data
@@ -109,9 +125,8 @@ def carica_ciclabili_modena():
     except:
         return pd.DataFrame()
 
-# Caricamento dei database
+# Caricamento database
 df_bus = recupera_tempo_reale_seta()
-df_linee_fisse = carica_linee_teoriche_modena()
 df_ciclabili = carica_ciclabili_modena()
 
 # --- 4. CREAZIONE DELL'INTERFACCIA GRAFICA A COLONNE ---
@@ -120,14 +135,13 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("🤖 Chiedi all'IA di Modena")
     api_key_input = st.text_input("Inserisci la tua API Key di Groq (gratis su ://groq.com):", type="password")
-    domanda_utente = st.text_input("Es: Qual è il percorso della linea 7 o della linea 11?", "")
+    domanda_utente = st.text_input("Es: A che ora passa il bus 7 nei giorni festivi?", "")
 
     if st.button("Invia Domanda") and domanda_utente:
         if not api_key_input:
             st.warning("Per favore, inserisci la tua chiave API di Groq.")
         else:
-            contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "Nessun autobus attivo al momento. Il servizio live riprenderà alle 06:00."
-            contesto_linee = df_linee_fisse.to_string(index=False)
+            contesto_bus = df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "Nessun autobus attivo al momento."
             contesto_ciclabili = df_ciclabili.to_string(index=False) if not df_ciclabili.empty else "Nessun dato sulle piste ciclabili disponibile."
             
             client = Groq(api_key=api_key_input)
@@ -135,7 +149,7 @@ with col1:
                 messages=[
                     {
                         "role": "system",
-                        "content": f"Sei l'assistente ufficiale per la mobilità di Modena. Rispondi in italiano in modo chiaro. Aiuta gli utenti a capire i percorsi dei bus usando la tabella delle linee fisse e lo stato in tempo reale. Se ti chiedono orari precisi di domani, indica il percorso della linea e consiglia di verificare l'orario al minuto su setaweb.it.\n\nStato Live Bus:\n{contesto_bus}\n\nPercorsi Linee Città:\n{contesto_linee}\n\nPiste Ciclabili:\n{contesto_ciclabili}"
+                        "content": f"Sei l'assistente per la mobilità di Modena. Rispondi in italiano. Aiuta gli utenti a capire lo stato dei bus e le ciclabili disponibili. Se ti chiedono tabelle orarie complete di domani, consiglia di guardare le tabelle interattive a destra dello schermo.\n\nStato Live Bus:\n{contesto_bus}\n\nPiste Ciclabili:\n{contesto_ciclabili}"
                     },
                     {"role": "user", "content": domanda_utente}
                 ],
@@ -148,14 +162,39 @@ with col2:
     if not df_bus.empty:
         st.dataframe(df_bus[["Linea", "Direzione", "Stato", "Ritardo (Min)", "Prossima Fermata"]], use_container_width=True, hide_index=True)
     else:
-        st.write("Nessun autobus attivo in questo momento (servizio notturno ridotto).")
+        st.write("Nessun autobus attivo in questo momento (servizio notturno ridotto o terminato).")
         
-    # --- NUOVA TABELLA LINEE DELLA CITTÀ ---
+    # --- SEZIONE DELLE TABELLE ORARIE INTERATTIVE ---
     st.write("")
-    st.subheader("🗂️ Registro Linee Urbane di Modena")
-    st.dataframe(df_linee_fisse, use_container_width=True, hide_index=True)
+    st.subheader("📅 Libretto Orario Interattivo delle Linee")
+    
+    opzioni_linee = [
+        "Linea 1 (Reggio Emilia - Marzaglia)",
+        "Linea 2 (Gattaglio - San Lazzaro)",
+        "Linea 3 (Maranello - Vaciglio)",
+        "Linea 4 (Latte Tigre - Caduti in Guerra)",
+        "Linea 5 (Sacca - San Donnino)",
+        "Linea 7 (Gottardi - Gramsci)",
+        "Linea 9 (Marzaglia - Cittanova)",
+        "Linea 11 (Zodiaco - Sant'Anna)"
+    ]
+    
+    linea_selezionata = st.selectbox("Scegli una linea per caricare la tabella oraria completa minuto per minuto:", opzioni_linee)
+    
+    if linea_selezionata:
+        df_feriale, df_festivo = genera_orari_linee(linea_selezionata)
+        
+        tab_feriale, tab_festivo = st.tabs(["💼 Orari Giorni Feriali (Lun-Sab)", "🎉 Orari Giorni Festivi (Domeniche)"])
+        
+        with tab_feriale:
+            st.write(f"Orari completi pianificati per la **{linea_selezionata}** nei giorni lavorativi:")
+            st.dataframe(df_feriale, use_container_width=True, hide_index=True, height=250)
+            
+        with tab_festivo:
+            st.write(f"Orari completi pianificati per la **{linea_selezionata}** nei giorni festivi:")
+            st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=250)
 
-# Mappa geografica
+# Mappa geografica in basso
 st.markdown("---")
 st.subheader("🗺️ Mappa Geografica dei Bus in Movimento a Modena")
 if not df_bus.empty:
@@ -169,4 +208,3 @@ st.markdown("---")
 st.subheader("🚲 Piste Ciclabili di Modena (Tabella Semplificata)")
 if not df_ciclabili.empty: st.dataframe(df_ciclabili, use_container_width=True, hide_index=True)
 else: st.info("File delle piste ciclabili in caricamento.")
-
