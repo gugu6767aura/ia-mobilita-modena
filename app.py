@@ -50,8 +50,7 @@ def recupera_tempo_reale_seta():
 df_bus = recupera_tempo_reale_seta()
 
 # --- 2. CREAZIONE DELL'INTERFACCIA GRAFICA A COLONNE ---
-col1, col2 = st.columns([1, 1])
-
+col1, col2 = st.columns(2)
 
 # Colonna di Sinistra: La chat intelligente
 with col1:
@@ -100,10 +99,6 @@ if not df_bus.empty:
     if not df_mappa.empty:
         st.map(df_mappa, size=40)
     else:
-        st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
-else:
-    st.write("Nessun dato geografico disponibile al momento.")
-
         st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
 else:
     st.write("Nessun dato geografico disponibile al momento.")
