@@ -102,3 +102,21 @@ if not df_bus.empty:
         st.write("Impossibile mostrare la mappa: coordinate GPS non disponibili nei dati correnti.")
 else:
     st.write("Nessun dato geografico disponibile al momento.")
+
+
+import streamlit as st
+import pandas as pd
+from simpledbf import SimpleDbf
+
+st.subheader("🚲 Mappa delle Piste Ciclabili di Modena")
+
+try:
+    # Legge il file delle ciclabili del Comune scaricato prima
+    dbf = SimpleDbf('ciclabili.dbf')
+    df_ciclabili = dbf.to_dataframe()
+    
+    # Mostra la tabella delle ciclabili sullo schermo
+    st.dataframe(df_ciclabili.head(50), use_container_width=True)
+except Exception as e:
+    st.write("Carica il file ciclabili.dbf su GitHub per vedere i dati.")
+
