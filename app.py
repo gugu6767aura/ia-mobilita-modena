@@ -68,8 +68,7 @@ with col1:
             c_bus = df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "No bus live."
             client = Groq(api_key=api_key_input)
             chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Conosci ogni fermata del territorio. Aiuta l'utente a capire quali fermate capillari usare via per via nella città di Modena. Rispondi in italiano.\n\nBus Live:\n{c_bus}"}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
-            st.info(chat_completion.choices.message.content)
-
+         st.info(chat_completion.choices[0].message.content)
 with col2:
     st.subheader("📊 Tabellone Live dei Bus (Ritardi + / Anticipi -)")
     if not df_bus.empty: st.dataframe(df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]], use_container_width=True, hide_index=True)
@@ -121,4 +120,3 @@ if not df_bus.empty:
     if not df_mappa.empty: st.map(df_mappa, size=40)
     else: st.write("Coordinate GPS temporaneamente non disponibili.")
 else: st.write("Nessun mezzo in movimento da tracciare sulla mappa geografica in questo momento.")
-
