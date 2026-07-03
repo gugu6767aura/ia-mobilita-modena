@@ -2,7 +2,6 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
-import requests  # Il navigatore invisibile
 
 # 1. CONFIGURAZIONE INTERFACCIA WIDE
 st.set_page_config(layout="wide", page_title="Assistente IA Mobilità - Modena", page_icon="🚌")
@@ -16,6 +15,14 @@ try:
 except ImportError:
     st.error("⚠️ Errore: Manca il file 'dati_linee.py' nella stessa cartella.")
     st.stop()
+
+# Estraiamo l'elenco di TUTTE le fermate uniche di Modena per i menu di viaggio
+tutte_le_fermate = set()
+for linea_nome, direzioni in DATABASE_LINEE.items():
+    for dir_nome in ["andata", "ritorno"]:
+        for f in direzioni.get(dir_nome, []):
+            tutte_le_fermate.add(f["nome"])
+elenco_fermate_ordinato = sorted(list(tutte_le_fermate))
 
 # 2. GRIGLIA SUPERIORE (Assistente IA & Tabellone Live)
 col_top1, col_top2 = st.columns(2)
@@ -67,48 +74,54 @@ with col_bot3:
     st.number_input("Latitudine Geografica:", value=lat_attiva, format="%.5f", disabled=True)
     st.number_input("Longitudine Geografica:", value=lon_attiva, format="%.5f", disabled=True)
 
-# --- COLONNA 1: PERCORSO ---
+# --- COLONNA 1: PERCORSO REALE E INTELLIGENTE ---
 with col_bot1:
     st.subheader("🗺️ Percorso")
-    partenza = st.text_input("📍 Punto A (Partenza):", value="Viale Muratori")
-    arrivo = st.text_input("📍 Punto B (Destinazione):", value="Via Giardini")
+    
+    # Trasformiamo i vecchi text_input in menu a tendina con le fermate vere del tuo database!
+    fermata_partenza = st.selectbox("📍 Punto A (Partenza):", options=elenco_fermate_ordinato, index=0)
+    fermata_arrivo = st.selectbox("📍 Punto B (Destinazione):", options=elenco_fermate_ordinato, index=min(1, len(elenco_fermate_ordinato)-1))
     
     if st.button("Calcola Percorso Ottimale"):
-        st.success("🗺️ **Rotta Trovata!** Cammina fino a Muratori, prendi la **Linea 6** verso Via Giardini.")
-        st.link_button("🌐 Apri Navigatore Google Maps", f"https://google.com{lat_attiva},{lon_attiva}")
+        if fermata_partenza == fermata_arrivo:
+            st.warning("Sei già a destinazione! Scegli due fermate diverse.")
+        else:
+            linee_trovate = []
+            # Cerchiamo nel database se esiste una linea che le collega direttamente
+            for linea_nome, direzioni in DATABASE_LINEE.items():
+                for dir_nome in ["andata", "ritorno"]:
+                    nomi_linea = [f["nome"] for f in direzioni.get(dir_nome, [])]
+                    if fermata_partenza in nomi_linea and fermata_arrivo in nomi_linea:
+                        # Controlliamo se la partenza viene prima dell'arrivo in quella direzione
+                        idx_p = nomi_linea.index(fermata_partenza)
+                        idx_a = nomi_linea.index(fermata_arrivo)
+                        if idx_p < idx_a:
+                            linee_trovate.append(f"**{linea_nome}** ({dir_nome.capitalize()})")
+            
+            if linee_trovate:
+                st.success(f"🗺️ **Rotta Trovata!** Puoi prendere direttamente: {', '.join(linee_trovate)}.")
+            else:
+                # Messaggio di riserva se serve un cambio
+                st.info(f"🗺️ Cammina fino a **{fermata_partenza}**, prendi la prima linea disponibile verso il centro e scendi a **{fermata_arrivo}**.")
+            
+            st.link_button("🌐 Apri Navigatore Google Maps", f"https://google.com{lat_attiva},{lon_attiva}")
 
-# --- COLONNA 2: MAPPA LIVE (OPZIONE B CORRETTA - CURVE REALI) ---
+# --- COLONNA 2: MAPPA LIVE STABILE ---
 with col_bot2:
     st.subheader("🗺️ Mappa Live")
     
-    # Centra la mappa sulla fermata scelta dal menu
     mappa_modena = folium.Map(location=[lat_attiva, lon_attiva], zoom_start=14, tiles="CartoDB positron")
+    
+    coordinate_tracciato = [[f["lat"], f["lon"]] for f in lista_fermate]
     colore_linea = COLORI_LINEE.get(linea_selezionata, "#3498db")
     
-    # Colleghiamo le fermate calcolando le curve vere tra una fermata e la successiva
-    for i in range(len(lista_fermate) - 1):
-        f1 = lista_fermate[i]
-        f2 = lista_fermate[i+1]
-        
-        # Chiediamo la strada reale tra la fermata A e la fermata B
-        url_navigatore = f"http://project-osrm.org{f1['lon']},{f1['lat']};{f2['lon']},{f2['lat']}?overview=full&geometries=geojson"
-        
-        # Linea retta di riserva se il server internet ha un micro-blocco
-        coordinate_segmento = [[f1["lat"], f1["lon"]], [f2["lat"], f2["lon"]]]
-        
-        try:
-            risposta = requests.get(url_navigatore, timeout=2).json()
-            if risposta.get("code") == "Ok":
-                punti_strada = risposta["routes"][0]["geometry"]["coordinates"]
-                # Invertiamo da [lon, lat] a [lat, lon] per Folium
-                coordinate_segmento = [[p[1], p[0]] for p in punti_strada]
-        except:
-            pass # Se internet rallenta, unisce quel singolo pezzetto con una linea retta provvisoria
-            
-        # Disegna il pezzo di strada sulla mappa
-        folium.PolyLine(locations=coordinate_segmento, color=colore_linea, weight=5, opacity=0.85).add_to(mappa_modena)
+    folium.PolyLine(
+        locations=coordinate_tracciato,
+        color=colore_linea,
+        weight=5,
+        opacity=0.85
+    ).add_to(mappa_modena)
     
-    # Posizioniamo i bollini delle fermate sopra alle strade
     for fermata in lista_fermate:
         is_selected = (fermata["nome"] == fermata_scelta)
         folium.Marker(
