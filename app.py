@@ -3,7 +3,6 @@ from groq import Groq
 from streamlit_folium import st_folium
 from fermate import DB_FERMATE 
 
-# Configurazione della pagina Streamlit
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Modena")
 
@@ -47,19 +46,16 @@ def geocode(via):
 
 def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
     try:
-        # URL ufficiale OSRM v1 per agganciare le strade reali
         url = f"http://project-osrm.org{profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
             data = r.json()
             if "routes" in data and len(data["routes"]) > 0:
                 coords = data["routes"]["geometry"]["coordinates"]
-                # Inversione obbligatoria: OSRM usa [lon, lat], Folium vuole [lat, lon]
-                geom = [[point[1], point[0]] for point in coords]
-                duration = max(1, round(data["routes"][0]["duration"] / 60))
+                geom = [[point, point] for point in coords]
+                duration = max(1, round(data["routes"]["duration"] / 60))
                 return geom, duration
     except: pass
-    # Fallback in linea retta se i server di routing sono offline
     return [[start_lat, start_lon], [end_lat, end_lon]], 5
 
 def dist(lat1, lon1, lat2, lon2):
@@ -88,14 +84,25 @@ def find_nearest_osm_bus_stop(lat, lon):
                 return best_name, best_coord, min_d
     except: pass
     
-    # Fallback locale da dizionario se Overpass API fallisce
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
-        d = dist(lat, lon, coord[0], coord[1])
+        d = dist(lat, lon, coord, coord)
         if d < md: md, nf, cf = d, name, coord
     return nf, cf, md
 
-# Layout dell'applicazione Streamlit
+# Logica per trovare la linea ideale basandosi sulla vicinanza geografica del bus live
+def guess_best_bus_line(start_coord, bus_df):
+    if bus_df.empty:
+        return "Urbano"
+    min_dist = float('inf')
+    best_line = "Urbano"
+    for _, row in bus_df.iterrows():
+        d = dist(start_coord, start_coord, row['lat'], row['lon'])
+        if d < min_dist:
+            min_dist = d
+            best_line = row['Linea']
+    return best_line
+
 df_bus = get_live_data()
 col1, col2 = st.columns(2)
 
@@ -128,23 +135,26 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            # Calcolo fermate più vicine passando correttamente lat e lon separate
-            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p[0], c_p[1])
-            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a[0], c_a[1])
+            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p, c_p)
+            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a, c_a)
             
-            # Calcolo geometrie stradali reali (piedi -> bus -> piedi)
-            strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
-            strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
-            strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
+            # NOVITÀ: Trova in automatico quale bus della tabella live è più comodo per la partenza
+            linea_rilevata = guess_best_bus_line(co_fp, df_bus)
+            
+            strada_piedi_1, t_p1 = get_route_geometry(c_p, c_p, co_fp, co_fp, "foot")
+            strada_bus, t_bus = get_route_geometry(co_fp, co_fp, co_fa, co_fa, "driving")
+            strada_piedi_2, t_p2 = get_route_geometry(co_fa, co_fa, c_a, c_a, "foot")
             
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
-                "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2
+                "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2,
+                "linea": linea_rilevata
             }
             
+            # Messaggio aggiornato che specifica il bus esatto da prendere
             st.success(f"🚏 **Percorso trovato!**\n"
                        f"* 🚶‍♂️ Cammina fino alla fermata reale **{n_fp}** (~{t_p1} min).\n"
-                       f"* 🚌 Sali sul bus fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
+                       f"* 🚌 Sali sul bus della **Linea {linea_rilevata}** fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
                        f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
                        f"⏱️ **Tempo totale:** ~{t_p1 + t_bus + t_p2} minuti.")
         else: st.error("Indirizzi non trovati.")
@@ -157,12 +167,11 @@ with mc2:
         folium.Marker(rd["cp"], popup=f"Partenza: {vp}", icon=folium.Icon(color="gray", icon="user", prefix="fa")).add_to(m)
         folium.Marker(rd["ca"], popup=f"Arrivo: {va}", icon=folium.Icon(color="red", icon="flag")).add_to(m)
         
-        folium.CircleMarker(location=rd["cfp"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Sali qui: {rd['nfp']}").add_to(m)
+        folium.CircleMarker(location=rd["cfp"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Sali qui: {rd['nfp']} (Linea {rd['linea']})").add_to(m)
         folium.CircleMarker(location=rd["cfa"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Scendi qui: {rd['nfa']}").add_to(m)
         
-        # Disegno delle polilinee reali aggregate sulla mappa
         folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
-        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip="In Bus").add_to(m)
+        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip=f"In Bus (Linea {rd['linea']})").add_to(m)
         folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
         
     st_folium(m, width=650, height=350)
