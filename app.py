@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(layout="wide", page_title="Mobilità Modena", page_icon="🚌")
 st.title("🚌 Assistente Mobilità - Modena")
 
-# Caricamento database esterno
+# Caricamento database esterno delle linee
 try:
     from dati_linee import DATABASE_LINEE, COLORI_LINEE
 except ImportError:
@@ -54,7 +54,7 @@ def calcola_itinerario(partenza, arrivo):
                         for linea2_nome, direzioni2 in DATABASE_LINEE.items():
                             for dir2_nome in ["andata", "ritorno"]:
                                 nomi2 = [f["nome"] for f in direzioni2.get(dir2_nome, [])]
-                                if scalo in nomi2 and arrivo in nomi2:
+                                if scalo in nomi2 and arr_f_nome := arrivo in nomi2:
                                     idx_s2, idx_a = nomi2.index(scalo), nomi2.index(arrivo)
                                     if idx_s2 < idx_a and linea1_nome != linea2_nome:
                                         return {"tipo": "scalo", "linea1": linea1_nome, "dir1": dir1_nome.capitalize(), "scalo": scalo, "linea2": linea2_nome, "dir2": dir2_nome.capitalize(), "punti": [trova_coord(n) for n in nomi1[idx_p:idx_s1+1]] + [trova_coord(n) for n in nomi2[idx_s2:idx_a+1]]}
@@ -63,12 +63,27 @@ def calcola_itinerario(partenza, arrivo):
 if "itinerario_attivo" not in st.session_state:
     st.session_state.itinerario_attivo = None
 
-# --- TABELLONE LIVE SUPERIORE (Più basso) ---
+# --- STATO SELEZIONE ATTUALE ---
+# Questo blocco serve per estrarre la fermata attiva prima del tabellone live superiore
+lista_linee_iniziale = list(DATABASE_LINEE.keys())
+if "linea_sel" not in st.session_state: st.session_state.linea_sel = lista_linee_iniziale[0]
+if "dir_sel" not in st.session_state: st.session_state.dir_sel = "Andata"
+
+lista_fermate_init = DATABASE_LINEE[st.session_state.linea_sel][st.session_state.dir_sel.lower()]
+nomi_fermate_init = [f["nome"] for f in lista_fermate_init]
+if "fermata_sel" not in st.session_state: st.session_state.fermata_sel = nomi_fermate_init[0]
+
+# --- NUOVO TABELLONE LIVE DINAMICO COLLEGATO ALLA FERMATA ATTIVA ---
+st.markdown(f"📊 **Orari in Tempo Reale alla fermata:** `{st.session_state.fermata_sel}`")
+
 data_tabellone = {
-    "Linea": ["1", "7", "13"], "Direzione": ["Marinuzzi", "Gramsci", "Baggiovara"],
-    "Stato": ["+2 min 🔴", "In Orario 🔵", "-1 min 🟢"], "Prossima Fermata": ["Autostazione", "Stazione FS", "Direzionale 70"]
+    "Linea": [st.session_state.linea_sel, "Linea 7" if st.session_state.linea_sel != "Linea 7" else "Linea 1"],
+    "Direzione": [st.session_state.dir_sel, "Andata"],
+    "Attesa Stimata": ["In Arrivo ⚡", "6 min 🟢" if st.session_state.dir_sel == "Andata" else "11 min 🔵"],
+    "Stato Corsa": ["In Orario ✅", "+2 min 🔴"]
 }
-st.dataframe(pd.DataFrame(data_tabellone), use_container_width=True, hide_index=True, height=110)
+
+st.dataframe(pd.DataFrame(data_tabellone), use_container_width=True, hide_index=True, height=115)
 st.markdown("---")
 
 # 3. GRIGLIA INFERIORE RIDOTTA
@@ -77,12 +92,19 @@ col_bot1, col_bot2, col_bot3 = st.columns([1, 1.3, 1])
 # --- COLONNA 3: GESTIONE FERMATE ---
 with col_bot3:
     st.markdown("### ⚙️ Gestione Fermate")
-    linea_selezionata = st.selectbox("1. Linea:", options=list(DATABASE_LINEE.keys()))
-    direzione_interfaccia = st.radio("2. Direzione:", options=["Andata", "Ritorno"], horizontal=True)
+    linea_selezionata = st.selectbox("1. Linea:", options=lista_linee_iniziale, key="sb_linea")
+    st.session_state.linea_sel = linea_selezionata
+    
+    direzione_interfaccia = st.radio("2. Direzione:", options=["Andata", "Ritorno"], horizontal=True, key="rb_dir")
+    st.session_state.dir_sel = direzione_interfaccia
     
     lista_fermate = DATABASE_LINEE[linea_selezionata][direzione_interfaccia.lower()]
     nomi_fermate = [f["nome"] for f in lista_fermate]
-    fermata_scelta = st.selectbox("3. Fermata Attiva:", options=nomi_fermate)
+    
+    # Risoluzione del bug dell'indice fuori elenco quando si cambia linea
+    default_idx = nomi_fermate.index(st.session_state.fermata_sel) if st.session_state.fermata_sel in nomi_fermate else 0
+    fermata_scelta = st.selectbox("3. Fermata Attiva:", options=nomi_fermate, index=default_idx, key="sb_fermata")
+    st.session_state.fermata_sel = fermata_scelta
     
     dati_fermata = next(f for f in lista_fermate if f["nome"] == fermata_scelta)
     lat_attiva, lon_attiva = dati_fermata["lat"], dati_fermata["lon"]
