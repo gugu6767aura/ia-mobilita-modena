@@ -59,7 +59,6 @@ def dist(lat1, lon1, lat2, lon2):
     return 6371.0 * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
 
 def find_nearest_osm_bus_stop(lat, lon):
-    """Interroga la mappa in tempo reale per trovare il quadratino blu nativo più vicino entro 400 metri"""
     try:
         overpass_url = "https://overpass-api.de"
         overpass_query = f"""
@@ -81,7 +80,6 @@ def find_nearest_osm_bus_stop(lat, lon):
                 return best_name, best_coord, min_d
     except: pass
     
-    # Fallback sul nostro database se l'API della mappa è lenta o offline
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
         d = dist(lat, lon, coord, coord)
@@ -120,7 +118,7 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            # Trova la posizione esatta dei quadratini blu della mappa stradale
+            # CORREZIONE BUG TRACEBACK: spacchettamento corretto delle tuple di coordinate
             n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p, c_p)
             n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a, c_a)
             
@@ -133,7 +131,7 @@ with mc1:
                 "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2
             }
             
-            st.success(f"🚏 **Percorso Calcolato direttamente sui quadratini blu della mappa!**\n"
+            st.success(f"🚏 **Percorso trovato!**\n"
                        f"* 🚶‍♂️ Cammina fino alla fermata reale **{n_fp}** (~{t_p1} min).\n"
                        f"* 🚌 Sali sul bus fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
                        f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
@@ -141,16 +139,13 @@ with mc1:
         else: st.error("Indirizzi non trovati.")
 
 with mc2:
-    m = folium.Map(location=[44.6420, 10.9161], zoom_start=15) # Centrato sulla zona dello screenshot
+    m = folium.Map(location=[44.6420, 10.9161], zoom_start=15)
     
     if "route_data" in st.session_state:
         rd = st.session_state.route_data
-        
-        # Evidenzia con dei cerchi rossi e gialli lampeggianti i quadratini blu scelti per il viaggio
         folium.Marker(rd["cp"], popup=f"Partenza: {vp}", icon=folium.Icon(color="gray", icon="user", prefix="fa")).add_to(m)
         folium.Marker(rd["ca"], popup=f"Arrivo: {va}", icon=folium.Icon(color="red", icon="flag")).add_to(m)
         
-        # Marker trasparenti che si posizionano con precisione chirurgica SOPRA i quadratini blu dello sfondo
         folium.CircleMarker(location=rd["cfp"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Sali qui: {rd['nfp']}").add_to(m)
         folium.CircleMarker(location=rd["cfa"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Scendi qui: {rd['nfa']}").add_to(m)
         
