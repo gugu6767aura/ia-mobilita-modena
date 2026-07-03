@@ -2,7 +2,7 @@ import streamlit as st, requests, pandas as pd, urllib3
 from groq import Groq
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Comune di Modena")
-st.write("Monitoraggio SETA Live, Navigatore Geografico Multitracciato e Registro Fermate Capillare.")
+st.write("Monitoraggio SETA Live, Navigatore Geografico Multitracciato e Registro Fermate.")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @st.cache_data(ttl=15)
@@ -80,7 +80,6 @@ with col2:
         with tab_festivo: st.dataframe(df_festivo, use_container_width=True, hide_index=True, height=180)
         with tab_fermate: st.dataframe(df_fermate_lista, use_container_width=True, hide_index=True, height=180)
 
-# --- 4. SEZIONE NAVIGATORE GEOGRAFICO (STILE GOOGLE MAPS) ---
 st.markdown("---")
 st.subheader("🗺️ Calcolatore di Percorso Urbano (Navigatore Mappa Integrato)")
 coordinate_punti = {
@@ -106,14 +105,15 @@ if st.button("🔍 Calcola Percorso Ottimale"):
         elif "Stazione FS" in partenza and "Policlinico" in arrivo: punti_mappa.append(coordinate_punti["Largo Garibaldi"])
         df_gocce = pd.DataFrame(punti_mappa)
         st.write("### 📍 Mappa del Percorso con tutte le Fermate Intermedie (Segnaposti Multipli):"); st.map(df_gocce, size=45); st.markdown("### 🧭 Soluzione di Viaggio Dettagliata:")
-        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12Doc minuti** (Diretto)")
+        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12 minuti** (Diretto)")
         elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
         elif "Via Giardini" in partenza and "Stazione FS" in arrivo: st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
         else: st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11**.\n⏱️ **Tempo medio:** **24 minuti** | 🔄 Scali: 1")
 
-st.markdown("---"); st.subheader("🗺️ Posizione Geografica dei Bus Live (SETA GPS)")
-if not df_bus.empty:
-    df_mappa = df_bus.dropna(subset=["latitude", "longitude"])
-    if not df_mappa.empty: st.map(df_mappa, size=40)
-    else: st.write("Coordinate GPS temporaneamente non disponibili.")
-else: st.write("Nessun mezzo in movimento da tracciare sulla mappa geografica in questo momento.")
+st.markdown("---")
+st.subheader("🗺️ Mappa Geografica della Città di Modena")
+if not df_bus.empty and not df_bus.dropna(subset=["latitude", "longitude"]).empty:
+    st.map(df_bus.dropna(subset=["latitude", "longitude"]), size=40)
+else:
+    st.write("Mappa generale di Modena attiva. I pallini dei bus live compariranno non appena invieranno i dati GPS.")
+    st.map(pd.DataFrame([{"latitude": 44.6471, "longitude": 10.9252}]), size=30)
