@@ -52,7 +52,7 @@ def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
             data = r.json()
             if "routes" in data and len(data["routes"]) > 0:
                 coords = data["routes"]["geometry"]["coordinates"]
-                geom = [[point, point] for point in coords]
+                geom = [[point[1], point[0]] for point in coords]
                 duration = max(1, round(data["routes"]["duration"] / 60))
                 return geom, duration
     except: pass
@@ -86,18 +86,18 @@ def find_nearest_osm_bus_stop(lat, lon):
     
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
-        d = dist(lat, lon, coord, coord)
+        # CORRETTO: spacchettamento esplicito con [0] e [1]
+        d = dist(lat, lon, coord[0], coord[1])
         if d < md: md, nf, cf = d, name, coord
     return nf, cf, md
 
-# Logica per trovare la linea ideale basandosi sulla vicinanza geografica del bus live
-def guess_best_bus_line(start_coord, bus_df):
+def guess_best_bus_line(start_lat, start_lon, bus_df):
     if bus_df.empty:
         return "Urbano"
     min_dist = float('inf')
     best_line = "Urbano"
     for _, row in bus_df.iterrows():
-        d = dist(start_coord, start_coord, row['lat'], row['lon'])
+        d = dist(start_lat, start_lon, row['lat'], row['lon'])
         if d < min_dist:
             min_dist = d
             best_line = row['Linea']
@@ -135,15 +135,17 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p, c_p)
-            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a, c_a)
+            # CORRETTO: Spacchettamento delle tuple c_p e c_a usando gli indici [0] e [1]
+            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p[0], c_p[1])
+            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a[0], c_a[1])
             
-            # NOVITÀ: Trova in automatico quale bus della tabella live è più comodo per la partenza
-            linea_rilevata = guess_best_bus_line(co_fp, df_bus)
+            # CORRETTO: Passaggio dei parametri per calcolare la linea ottimale
+            linea_rilevata = guess_best_bus_line(co_fp[0], co_fp[1], df_bus)
             
-            strada_piedi_1, t_p1 = get_route_geometry(c_p, c_p, co_fp, co_fp, "foot")
-            strada_bus, t_bus = get_route_geometry(co_fp, co_fp, co_fa, co_fa, "driving")
-            strada_piedi_2, t_p2 = get_route_geometry(co_fa, co_fa, c_a, c_a, "foot")
+            # CORRETTO: Intere tuple spacchettate correttamente per OSRM stradale reale
+            strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
+            strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
+            strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
             
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
@@ -151,13 +153,12 @@ with mc1:
                 "linea": linea_rilevata
             }
             
-            # Messaggio aggiornato che specifica il bus esatto da prendere
             st.success(f"🚏 **Percorso trovato!**\n"
                        f"* 🚶‍♂️ Cammina fino alla fermata reale **{n_fp}** (~{t_p1} min).\n"
                        f"* 🚌 Sali sul bus della **Linea {linea_rilevata}** fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
                        f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
                        f"⏱️ **Tempo totale:** ~{t_p1 + t_bus + t_p2} minuti.")
-        else: st.error("Indirizzi non trovati.")
+        else: st.error("Indirizzi non trouvati.")
 
 with mc2:
     m = folium.Map(location=[44.6420, 10.9161], zoom_start=15)
