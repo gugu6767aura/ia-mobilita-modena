@@ -29,29 +29,41 @@ def get_live_data():
     ])
 
 def geocode(via):
-    if "barozzi" in via.lower(): return 44.6441, 10.9190
-    if "morane" in via.lower(): return 44.6245, 10.9340
+    # Dizionario interno di emergenza per le vie più utilizzate in modo da bypassare i blocchi del server
+    via_lower = via.lower()
+    if "barozzi" in via_lower: return 44.6441, 10.9190
+    if "morane" in via_lower: return 44.6245, 10.9340
+    if "tassoni" in via_lower: return 44.6420, 10.9161
+    if "trento" in via_lower: return 44.6542, 10.9322
+    if "emilia" in via_lower: return 44.6458, 10.9257
+    if "marconi" in via_lower: return 44.6499, 10.4210
+    
     try:
-        r = requests.get("https://openstreetmap.org", headers={"User-Agent": "M1_Modena_Transit"}, params={"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}, timeout=4)
+        url = "https://openstreetmap.org"
+        headers = {"User-Agent": "ModenaTransitNavigator_v3_Application"}
+        params = {"q": f"{via}, Modena, Emilia-Romagna, Italia", "format": "json", "limit": 1}
+        r = requests.get(url, headers=headers, params=params, timeout=5)
         if r.status_code == 200 and len(r.json()) > 0:
             return float(r.json()[0]["lat"]), float(r.json()[0]["lon"])
     except: pass
+    
+    # Se il server fallisce o va in blocco, estrae la prima fermata che contiene parzialmente il nome della via inserita
+    for nome_f, coord_f in DB_FERMATE.items():
+        if any(parola in nome_f.lower() for parola in via_lower.split() if len(parola) > 3):
+            return coord_f[0], coord_f[1]
+            
     return None
 
 def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
-    """Calcola il percorso reale lungo le strade e restituisce la geometria e la durata in minuti"""
     try:
-        # Sintassi corretta OSRM: lon,lat;lon,lat
         url = f"http://project-osrm.org{profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
             data = r.json()
             coords = data["routes"][0]["geometry"]["coordinates"]
             duration_minutes = round(data["routes"][0]["duration"] / 60)
-            # Converte da [lon, lat] di OSRM a [lat, lon] di Folium
             return [[c[1], c[0]] for c in coords], max(1, duration_minutes)
     except: pass
-    # Fallback geometrico se il server non risponde
     dist_approx = math.sqrt((end_lat-start_lat)**2 + (end_lon-start_lon)**2) * 111
     speed = 4.0 if profile == "foot" else 20.0
     return [[start_lat, start_lon], [end_lat, end_lon]], max(1, round((dist_approx / speed) * 60))
@@ -94,7 +106,7 @@ mc1, mc2 = st.columns(2)
 
 with mc1:
     st.subheader("🗺️ Percorso")
-    vp = st.text_input("⚪ Partenza:", "Viale Jacopo Barozzi")
+    vp = st.text_input("⚪ Partenza:", "Viale Alessandro Tassoni")
     va = st.text_input("📍 Arrivo:", "Via Morane")
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
@@ -102,7 +114,6 @@ with mc1:
             n_fp, co_fp, _ = find_near(c_p[0], c_p[1])
             n_fa, co_fa, _ = find_near(c_a[0], c_a[1])
             
-            # Calcolo dei percorsi stradali reali e dei tempi reali
             strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
             strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
             strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
@@ -118,12 +129,11 @@ with mc1:
                        f"* 🚶‍♂️ Scendi e prosegui a piedi fino a destinazione (~{t_p2} min).\n"
                        f"⏱️ **Tempo totale stimato:** ~{t_p1 + t_bus + t_p2} minuti.")
         else: 
-            st.error("Indirizzi non trovati.")
+            st.error("Indirizzi non trovati. Prova a semplificare il nome della via.")
 
 with mc2:
     m = folium.Map(location=[44.6471, 10.9252], zoom_start=13)
-    for n, c in DB_FERMATE.items(): 
-        folium.CircleMarker(location=c, radius=4, color="green", fill=True, popup=n).add_to(m)
+    for n, c in DB_FERMATE.items(): folium.CircleMarker(location=c, radius=4, color="green", fill=True, popup=n).add_to(m)
     
     if "route_data" in st.session_state:
         rd = st.session_state.route_data
@@ -132,7 +142,6 @@ with mc2:
         folium.Marker(rd["cfp"], popup=rd["nfp"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
         folium.Marker(rd["cfa"], popup=rd["nfa"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
         
-        # Disegno delle linee stradali esatte sulla mappa
         folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
         folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip="In Autobus").add_to(m)
         folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
