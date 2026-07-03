@@ -14,7 +14,6 @@ st.set_page_config(
 )
 st.title("🚌 Assistente IA Mobilità - Modena")
 
-# --- STATO FERMATE ---
 if "fermate_pers" not in st.session_state:
     st.session_state.fermate_pers = DB_FERMATE.copy()
 
@@ -28,12 +27,9 @@ def get_live_data():
             l = []
             for _, info in r.json().get("corse", {}).items():
                 rit = int(info.get("ritardo", 0))
-                if rit > 0:
-                    stato = f"+{rit} min 🔴"
-                elif rit < 0:
-                    stato = f"-{abs(rit)} min 🟢"
-                else:
-                    stato = "Orario 🔵"
+                if rit > 0: stato = f"+{rit} min 🔴"
+                elif rit < 0: stato = f"-{abs(rit)} min 🟢"
+                else: stato = "Orario 🔵"
                 l.append({
                     "Linea": info.get("linea"), 
                     "Direzione": info.get("capolinea_destinazione"),
@@ -60,7 +56,7 @@ def geocode(via):
     if "giardini" in v: return 44.6295, 10.9124
     try:
         url = "https://openstreetmap.org"
-        h = {"User-Agent": "IA_Modena_v8"}
+        h = {"User-Agent": "IA_Modena_v9"}
         p = {"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}
         r = requests.get(url, headers=h, params=p, timeout=5)
         if r.status_code == 200 and len(r.json()) > 0:
@@ -79,7 +75,7 @@ def get_route_geometry(slat, slon, elat, elon, profile="foot"):
             data = r.json()
             if "routes" in data and len(data["routes"]) > 0:
                 coords = data["routes"][0]["geometry"]["coordinates"]
-                geom = [[pt[1], pt[0]] for pt in coords]
+                geom = [[point[1], point[0]] for point in coords]
                 dur = max(1, round(data["routes"][0]["duration"] / 60))
                 return geom, dur
     except: pass
@@ -119,7 +115,7 @@ def guess_best_bus_line(slat, slon, bus_df):
         if d < md: md, bl = d, row['Linea']
     return bl
 
-# --- LAYOUT PRINCIPALE ---
+# --- INTERFACCIA ---
 df_bus = get_live_data()
 col1, col2 = st.columns(2)
 
