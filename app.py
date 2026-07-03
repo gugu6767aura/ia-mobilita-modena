@@ -2,7 +2,6 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
-import requests
 
 # 1. CONFIGURAZIONE INTERFACCIA WIDE
 st.set_page_config(layout="wide", page_title="Assistente IA Mobilità - Modena", page_icon="🚌")
@@ -77,37 +76,24 @@ with col_bot1:
         st.success("🗺️ **Rotta Trovata!** Cammina fino a Muratori, prendi la **Linea 6** verso Via Giardini.")
         st.link_button("🌐 Apri Navigatore Google Maps", f"https://google.com{lat_attiva},{lon_attiva}")
 
-# --- COLONNA 2: MAPPA LIVE (RICERCA STRADALE A BLOCCHI) ---
+# --- COLONNA 2: MAPPA LIVE STABILE ---
 with col_bot2:
     st.subheader("🗺️ Mappa Live")
     
+    # Centra la mappa sulla fermata scelta dal menu
     mappa_modena = folium.Map(location=[lat_attiva, lon_attiva], zoom_start=14, tiles="CartoDB positron")
+    
+    # Estraiamo l'elenco ordinato di coordinate delle fermate [lat, lon]
+    coordinate_tracciato = [[f["lat"], f["lon"]] for f in lista_fermate]
     colore_linea = COLORI_LINEE.get(linea_selezionata, "#3498db")
     
-    # Spezziamo la lista delle fermate a blocchi di 10 per non mandare in crash il server stradale
-    dimensione_blocco = 10
-    for i in range(0, len(lista_fermate) - 1, dimensione_blocco - 1):
-        blocco_fermate = lista_fermate[i:i + dimensione_blocco]
-        
-        if len(blocco_fermate) < 2:
-            continue
-            
-        stringa_coordinate = ";".join([f"{f['lon']},{f['lat']}" for f in blocco_fermate])
-        url_navigatore = f"http://project-osrm.org{stringa_coordinate}?overview=full&geometries=geojson"
-        
-        # Linea retta di riserva locale per questo pezzetto
-        coordinate_pezzo = [[f["lat"], f["lon"]] for f in blocco_fermate]
-        
-        try:
-            risposta = requests.get(url_navigatore, timeout=3).json()
-            if risposta.get("code") == "Ok":
-                punti_strada = risposta["routes"][0]["geometry"]["coordinates"]
-                coordinate_pezzo = [[p[1], p[0]] for p in punti_strada]
-        except:
-            pass # Se scatta il timeout usa la linea retta temporanea per questo segmento
-            
-        # Disegna il segmento stradale (curvo se l'API ha risposto, dritto se offline)
-        folium.PolyLine(locations=coordinate_pezzo, color=colore_linea, weight=5, opacity=0.85).add_to(mappa_modena)
+    # Disegniamo la linea di collegamento tra le fermate
+    folium.PolyLine(
+        locations=coordinate_tracciato,
+        color=colore_linea,
+        weight=5,
+        opacity=0.85
+    ).add_to(mappa_modena)
     
     # Posizioniamo i bollini delle fermate
     for fermata in lista_fermate:
