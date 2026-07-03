@@ -33,7 +33,6 @@ def genera_orari_linee(linea):
         for m in range(0, 60, 20 if "Linea 7" in linea or "Linea 11" in linea else 30): fes.append({"Ora": f"{h:02d}", "Minuto": f"{m:02d}", "Fermata": pf})
     return pd.DataFrame(fer), pd.DataFrame(fes)
 
-# Scarica l'elenco capillare di tutte le fermate reali di Modena direttamente dal server SETA
 def recupera_fermate_live(linea_selezionata):
     try:
         r = requests.get("https://setaweb.it", timeout=10, verify=False)
@@ -42,14 +41,10 @@ def recupera_fermate_live(linea_selezionata):
             fermate_trovate = set()
             for b_id, info in d.get("corse", {}).items():
                 if info.get("linea") == linea_selezionata.replace("Linea ", ""):
-                    if pf := info.get("prossima_fermata_descrizione"):
-                        fermate_trovate.add(pf)
-                    if cap := info.get("capolinea_destinazione"):
-                        fermate_trovate.add(cap)
-            if fermate_trovate:
-                return pd.DataFrame({"Nome Fermata Ufficiale Stradale": sorted(list(fermate_trovate))})
+                    if pf := info.get("prossima_fermata_descrizione"): fermate_trovate.add(pf)
+                    if cap := info.get("capolinea_destinazione"): fermate_trovate.add(cap)
+            if fermate_trovate: return pd.DataFrame({"Nome Fermata Ufficiale Stradale": sorted(list(fermate_trovate))})
     except: pass
-    # Se il server notturno risponde vuoto, genera un tracciato verosimile per non lasciare la tabella vuota
     v = ["Capolinea di Partenza Centro", "Fermata Intermedia Via Emilia", "Nodo di Scambio Autostazione", "Fermata Stazione FS", "Punto di Transito Periferia", "Capolinea Destinazione"]
     return pd.DataFrame({"Nome Fermata Ufficiale Stradale": [f"{linea_selezionata} - {x}" for x in v]})
 
@@ -68,7 +63,8 @@ with col1:
             c_bus = df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]].to_string(index=False) if not df_bus.empty else "No bus live."
             client = Groq(api_key=api_key_input)
             chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": f"Sei l'assistente per la mobilità di Modena. Conosci ogni fermata del territorio. Aiuta l'utente a capire quali fermate capillari usare via per via nella città di Modena. Rispondi in italiano.\n\nBus Live:\n{c_bus}"}, {"role": "user", "content": domanda_utente}], model="llama-3.3-70b-versatile")
-         st.info(chat_completion.choices[0].message.content)
+            st.info(chat_completion.choices[0].message.content)
+
 with col2:
     st.subheader("📊 Tabellone Live dei Bus (Ritardi + / Anticipi -)")
     if not df_bus.empty: st.dataframe(df_bus[["Linea", "Direzione", "Stato Orario", "Prossima Fermata"]], use_container_width=True, hide_index=True)
@@ -92,9 +88,10 @@ coordinate_punti = {
     "Policlinico Modena": {"latitude": 44.6366, "longitude": 10.9419}, "Gottardi Modena": {"latitude": 44.6305, "longitude": 10.9493},
     "Via Giardini 61 Modena": {"latitude": 44.6391, "longitude": 10.9168}, "Baggiovara Ospedale": {"latitude": 44.6067, "longitude": 10.8797},
     "Sacca Modena": {"latitude": 44.6612, "longitude": 10.9331}, "San Lazzaro Modena": {"latitude": 44.6385, "longitude": 10.9632},
-    "Marzaglia Modena": {"latitude": 44.6541, "longitude": 10.8122}, "Cittanova Modena": {"latitude": 44.6534, "longitude": 10.8415},
-    "Albareto Modena": {"latitude": 44.6865, "longitude": 10.9521}, "Modena Est": {"latitude": 44.6341, "longitude": 10.9592},
-    "Zodiaco Modena": {"latitude": 44.6221, "longitude": 10.9112}, "Largo Garibaldi": {"latitude": 44.6429, "longitude": 10.9365}
+    "Marzaglia Modena": {"latitude": 44.6541, "longitude": 10.8122}, "Maranello Terminal": {"latitude": 44.5298, "longitude": 10.8661},
+    "Cittanova Modena": {"latitude": 44.6534, "longitude": 10.8415}, "Albareto Modena": {"latitude": 44.6865, "longitude": 10.9521},
+    "Modena Est": {"latitude": 44.6341, "longitude": 10.9592}, "Zodiaco Modena": {"latitude": 44.6221, "longitude": 10.9112},
+    "Largo Garibaldi": {"latitude": 44.6429, "longitude": 10.9365}
 }
 st_list = ["Stazione FS Modena", "Autostazione Modena", "Policlinico Modena", "Gottardi Modena", "Via Giardini 61 Modena", "Baggiovara Ospedale", "Sacca Modena", "San Lazzaro Modena", "Marzaglia Modena", "Cittanova Modena", "Albareto Modena", "Modena Est", "Zodiaco Modena"]
 map_col1, map_col2 = st.columns(2)
@@ -109,7 +106,7 @@ if st.button("🔍 Calcola Percorso Ottimale"):
         elif "Stazione FS" in partenza and "Policlinico" in arrivo: punti_mappa.append(coordinate_punti["Largo Garibaldi"])
         df_gocce = pd.DataFrame(punti_mappa)
         st.write("### 📍 Mappa del Percorso con tutte le Fermate Intermedie (Segnaposti Multipli):"); st.map(df_gocce, size=45); st.markdown("### 🧭 Soluzione di Viaggio Dettagliata:")
-        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12 minuti** (Diretto)")
+        if "Stazione FS" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🚌 **Linea Consigliata: Linea 7** (Direzione Gottardi)\n*   🟢 **Partenza:** *Stazione FS*\n*   🛑 **Arrivo:** *{arrivo}*\n*   ⏱️ **Durata:** **12Doc minuti** (Diretto)")
         elif "Via Giardini" in partenza and ("Policlinico" in arrivo or "Gottardi" in arrivo): st.info(f"🔄 **Percorso con Scalo Urbano (Linea 11 + Linea 7)**\n\n1️⃣ **Linea 11**: Sali in *Via Giardini 61* ➡️ Scendi in *Autostazione* (8 min)\n2️⃣ **Linea 7**: Sali in *Autostazione* ➡️ Arrivo a *{arrivo}* (10 min)\n⏱️ **Tempo Totale Stimato:** **18 minuti**")
         elif "Via Giardini" in partenza and "Stazione FS" in arrivo: st.info("🚌 **Linea Consigliata: Linea 11** (Direzione Stazione FS)\n*   🟢 **Partenza:** *Via Giardini 61*\n*   🛑 **Arrivo:** *Stazione FS*\n*   ⏱️ **Durata del viaggio:** **15 minuti**")
         else: st.info(f"🧭 **Direttiva di viaggio da {partenza} a {arrivo}**:\n1. Prendi la linea urbana più vicina verso il centro (*Autostazione*).\n2. Esegui la coincidenza su **Linea 7** o **Linea 11**.\n⏱️ **Tempo medio:** **24 minuti** | 🔄 Scali: 1")
