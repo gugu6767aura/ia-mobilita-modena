@@ -41,7 +41,7 @@ def recupera_tempo_reale_seta():
 def trova_fermata_piu_vicina(lat, lon):
     min_dist, nome_fermata_vicina, coord_fermata = float('inf'), "Nessuna fermata", [44.6471, 10.9252]
     for nome, coord in fermate_modena_complessive.items():
-        dist = math.sqrt((lat - coord[0])**2 + (lon - coord[1])**2)
+        dist = math.sqrt((lat - coord)**2 + (lon - coord)**2)
         if dist < min_dist: min_dist, nome_fermata_vicina, coord_fermata = dist, nome, coord
     return nome_fermata_vicina, coord_fermata
 
@@ -75,12 +75,11 @@ with map_col1:
     calcola_percorso = st.button("🔍 Trova Fermate Più Vicine")
 
 with map_col2:
-    st.markdown("**🎨 Legenda Mappa:** 🔴 Percorso Bus Diretto | 🔵 Tracciato Linea 11 | 🟢 Altre Linee Urbane")
+    st.markdown("**🎨 Legenda Itinerario:** ⚫ Tratto a Piedi (Tratteggiato) | 🔴 Tratto in Bus (Linea Continua)")
     m = folium.Map(location=[44.6471, 10.9252], zoom_start=13, control_scale=True)
     
-    # Genera automaticamente le linee di collegamento geometriche per tutte le 15 linee urbane
     lista_fermate_coord = list(fermate_modena_complessive.values())
-    folium.PolyLine(locations=lista_fermate_coord, color="green", weight=3, opacity=0.5, tooltip="Rete Linee Urbane 1-15").add_to(m)
+    folium.PolyLine(locations=lista_fermate_coord, color="green", weight=2, opacity=0.3, tooltip="Rete Linee").add_to(m)
         
     if calcola_percorso and via_partenza and via_arrivo:
         lat_p, lon_p = (44.6391, 10.9168) if "giardini" in via_partenza.lower() else (44.6508, 10.9317)
@@ -91,12 +90,15 @@ with map_col2:
         
         folium.Marker(location=[lat_p, lon_p], popup=f"Partenza: {via_partenza}", icon=folium.Icon(color="white", icon="user", prefix="fa")).add_to(m)
         folium.Marker(location=[lat_a, lon_a], popup=f"Arrivo: {via_arrivo}", icon=folium.Icon(color="red", icon="flag")).add_to(m)
-        folium.Marker(location=coord_f_p, popup=f"🚏 Fermata più vicina: {nome_f_p}", icon=folium.Icon(color="blue", icon="bus", prefix="fa")).add_to(m)
-        folium.Marker(location=coord_f_a, popup=f"🚏 Fermata più vicina: {nome_f_a}", icon=folium.Icon(color="red", icon="bus", prefix="fa")).add_to(m)
+        folium.Marker(location=coord_f_p, popup=f"🚏 Sali alla fermata: {nome_f_p}", icon=folium.Icon(color="blue", icon="bus", prefix="fa")).add_to(m)
+        folium.Marker(location=coord_f_a, popup=f"🚏 Scendi alla fermata: {nome_f_a}", icon=folium.Icon(color="blue", icon="bus", prefix="fa")).add_to(m)
         
-        # Disegna la linea continua del percorso calcolato stile Google Maps
-        folium.PolyLine(locations=[[lat_p, lon_p], coord_f_p, coord_f_a, [lat_a, lon_a]], color="red", weight=5, opacity=0.8, tooltip="Percorso Bus Consigliato").add_to(m)
-        st.success(f"🚏 **Fermate rilevate:** Vicino alla partenza la fermata più vicina è **{nome_f_p}**. Vicino alla meta è **{nome_f_a}**.")
+        # DISEGNO DEI TRAGITTI DETTAGLIATI (A piedi e in bus stile Google Maps)
+        folium.PolyLine(locations=[[lat_p, lon_p], coord_f_p], color="black", weight=4, dash_array="5, 10", tooltip="Cammina fino alla fermata").add_to(m)
+        folium.PolyLine(locations=[coord_f_p, coord_f_a], color="red", weight=6, opacity=0.9, tooltip="Tratto in Autobus").add_to(m)
+        folium.PolyLine(locations=[coord_f_a, [lat_a, lon_a]], color="black", weight=4, dash_array="5, 10", tooltip="Cammina fino alla destinazione").add_to(m)
+        
+        st.success(f"🚏 **Itinerario Generato:** Cammina fino alla fermata **{nome_f_p}**, prendi il bus diretto a **{nome_f_a}** e cammina fino a destinazione.")
 
     if not df_bus.empty:
         for idx, row in df_bus.dropna(subset=["latitude", "longitude"]).iterrows():
