@@ -15,9 +15,7 @@ COLORI_LINEE = {
     "Linea 13": "#b03a2e",  # Rosso mattone
     "Linea 15": "#2e4053",  # Blu elettrico / Ardesia
 }
-
-
-# 2. DIZIONARIO DELLA LINEA 1
+# 2. DIZIONARIO DELLA LINEA 1 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_1 = {
     "andata": [
         {"nome": "Ariete Capolinea", "lat": 44.6215, "lon": 10.8911},
@@ -26,10 +24,12 @@ linea_1 = {
         {"nome": "Formigina bv Cannizzaro", "lat": 44.6248, "lon": 10.8951},
         {"nome": "Formigina bv Lagrange", "lat": 44.6285, "lon": 10.8970},
         {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},
+        {"nome": "Giardini bv Gozzi", "lat": 44.6332, "lon": 10.8982},  # INTERMEDIA AGGIUNTA
         {"nome": "Polo Leonardo", "lat": 44.6352, "lon": 10.8988},
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "Luosi bv Fattori", "lat": 44.6424, "lon": 10.9118},
@@ -47,6 +47,8 @@ linea_1 = {
         {"nome": "Caduti in Guerra Tempio", "lat": 44.6499, "lon": 10.9298},
         {"nome": "Caduti in Guerra Giardini", "lat": 44.6482, "lon": 10.9271},
         {"nome": "Caduti in Guerra Orto Botanico", "lat": 44.6468, "lon": 10.9262},
+        {"nome": "Muratori bv Trento Trieste", "lat": 44.6398, "lon": 10.9295}, # INTERMEDIA AGGIUNTA
+        {"nome": "Viale Trento Trieste civ. 30", "lat": 44.6412, "lon": 10.9315}, # INTERMEDIA AGGIUNTA
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Grimelli", "lat": 44.6461, "lon": 10.9294},
         {"nome": "Tagliazucchi", "lat": 44.6469, "lon": 10.9332},
@@ -57,6 +59,8 @@ linea_1 = {
         {"nome": "Pelusia", "lat": 44.6442, "lon": 10.9469},
         {"nome": "Pelusia Ausl", "lat": 44.6431, "lon": 10.9491},
         {"nome": "Saliceto Panaro bv Borri", "lat": 44.6418, "lon": 10.9525},
+        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388}, # INTERMEDIA AGGIUNTA
+        {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},   # INTERMEDIA AGGIUNTA
         {"nome": "Pancaldi bv Cimarosa", "lat": 44.6402, "lon": 10.9548},
         {"nome": "Pancaldi bv Ponchielli", "lat": 44.6391, "lon": 10.9562},
         {"nome": "Toscanini", "lat": 44.6380, "lon": 10.9581},
@@ -71,6 +75,7 @@ linea_1 = {
         {"nome": "Marinuzzi Capolinea", "lat": 44.6294, "lon": 10.9768}
     ],
     "ritorno": [
+        # La lista di ritorno viene invertita e popolata con la stessa logica di precisione densa
         {"nome": "Marinuzzi Capolinea", "lat": 44.6294, "lon": 10.9768},
         {"nome": "Marinuzzi bv Scarlatti", "lat": 44.6302, "lon": 10.9751},
         {"nome": "Caduti sul Lavoro bivio Wagner", "lat": 44.6315, "lon": 10.9734},
@@ -83,6 +88,8 @@ linea_1 = {
         {"nome": "Toscanini", "lat": 44.6380, "lon": 10.9581},
         {"nome": "Pancaldi bv Ponchielli", "lat": 44.6391, "lon": 10.9562},
         {"nome": "Pancaldi bv Cimarosa", "lat": 44.6402, "lon": 10.9548},
+        {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},   # INTERMEDIA AGGIUNTA
+        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388}, # INTERMEDIA AGGIUNTA
         {"nome": "Saliceto Panaro bv Borri", "lat": 44.6418, "lon": 10.9525},
         {"nome": "Pelusia Ausl", "lat": 44.6431, "lon": 10.9491},
         {"nome": "Pelusia", "lat": 44.6442, "lon": 10.9469},
@@ -93,6 +100,8 @@ linea_1 = {
         {"nome": "Tagliazucchi", "lat": 44.6469, "lon": 10.9332},
         {"nome": "Grimelli", "lat": 44.6461, "lon": 10.9294},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
+        {"nome": "Viale Trento Trieste civ. 30", "lat": 44.6412, "lon": 10.9315}, # INTERMEDIA AGGIUNTA
+        {"nome": "Muratori bv Trento Trieste", "lat": 44.6398, "lon": 10.9295}, # INTERMEDIA AGGIUNTA
         {"nome": "Caduti in Guerra Orto Botanico", "lat": 44.6468, "lon": 10.9262},
         {"nome": "Caduti in Guerra Giardini", "lat": 44.6482, "lon": 10.9271},
         {"nome": "Caduti in Guerra Tempio", "lat": 44.6499, "lon": 10.9298},
@@ -110,10 +119,12 @@ linea_1 = {
         {"nome": "Luosi bv Fattori", "lat": 44.6424, "lon": 10.9118},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
         {"nome": "Polo Leonardo", "lat": 44.6352, "lon": 10.8988},
+        {"nome": "Giardini bv Gozzi", "lat": 44.6332, "lon": 10.8982},  # INTERMEDIA AGGIUNTA
         {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},
         {"nome": "Formigina bv Lagrange", "lat": 44.6285, "lon": 10.8970},
         {"nome": "Formigina bv Cannizzaro", "lat": 44.6248, "lon": 10.8951},
@@ -122,76 +133,89 @@ linea_1 = {
         {"nome": "Ariete Capolinea", "lat": 44.6215, "lon": 10.8911}
     ]
 }
-
-# 3. RACCOGLITORE DELLE LINEE ATTIVE
-DATABASE_LINEE = {
-    "Linea 1": linea_1,
-}
-# 2. DIZIONARIO DELLA LINEA 2 (Formato Lungo)
+# 2. DIZIONARIO DELLA LINEA 2 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_2 = {
     "andata": [
         {"nome": "Sant'Anna Terminal", "lat": 44.6612, "lon": 10.9015},
         {"nome": "Pio Donati", "lat": 44.6584, "lon": 10.9038},
         {"nome": "Del Presidio", "lat": 44.6569, "lon": 10.9061},
+        {"nome": "Nazionale per Carpi civ. 40", "lat": 44.6515, "lon": 10.8992},  # INTERMEDIA AGGIUNTA
         {"nome": "D'Avia Nord", "lat": 44.6462, "lon": 10.8841},
         {"nome": "D'Avia Sud", "lat": 44.6455, "lon": 10.8852},
+        {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},          # INTERMEDIA AGGIUNTA
         {"nome": "Polo Leonardo", "lat": 44.6354, "lon": 10.8991},
         {"nome": "Leonardo Da Vinci", "lat": 44.6358, "lon": 10.8994},
         {"nome": "Viale Corassori", "lat": 44.6391, "lon": 10.9082},
         {"nome": "Amendola civ. 45", "lat": 44.6375, "lon": 10.9162},
         {"nome": "Amendola", "lat": 44.6369, "lon": 10.9198},
+        {"nome": "Buon Pastore civ. 40", "lat": 44.6358, "lon": 10.9202},         # INTERMEDIA AGGIUNTA
         {"nome": "Buon Pastore civ. 110", "lat": 44.6349, "lon": 10.9215},
         {"nome": "Buon Pastore", "lat": 44.6338, "lon": 10.9234},
+        {"nome": "Morane bv Panni", "lat": 44.6291, "lon": 10.9298},              # INTERMEDIA AGGIUNTA
         {"nome": "Morane Bv Gobetti", "lat": 44.6276, "lon": 10.9312},
         {"nome": "Morane civ. 180", "lat": 44.6232, "lon": 10.9319},
-        {"nome": "Vignolese Bv Campi", "lat": 44.6341, "lon": 10.9419},
+        {"nome": "Vignolese Bv Campi", "lat": 44.6341, "lon": 10.4119},
         {"nome": "Vignolese Università", "lat": 44.6293, "lon": 10.9482},
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502},
+        {"nome": "Vignolese bv Gelmini", "lat": 44.6272, "lon": 10.9554},          # INTERMEDIA AGGIUNTA
         {"nome": "Geminiano", "lat": 44.6251, "lon": 10.9604},
         {"nome": "Collegara civ. 30", "lat": 44.6225, "lon": 10.9652},
         {"nome": "Collegara", "lat": 44.6214, "lon": 10.9691},
         {"nome": "San Damaso Chiesa", "lat": 44.6192, "lon": 10.9754},
         {"nome": "San Damaso Bv Vignolese", "lat": 44.6175, "lon": 10.9798},
+        {"nome": "Vignolese civ. 1020", "lat": 44.6052, "lon": 10.9912},          # INTERMEDIA AGGIUNTA
         {"nome": "San Donnino Chiesa", "lat": 44.5984, "lon": 11.0021},
         {"nome": "San Donnino Terminal", "lat": 44.5942, "lon": 11.0084}
     ],
     "ritorno": [
         {"nome": "San Donnino Terminal", "lat": 44.5942, "lon": 11.0084},
         {"nome": "San Donnino Chiesa", "lat": 44.5984, "lon": 11.0021},
+        {"nome": "Vignolese civ. 1020", "lat": 44.6052, "lon": 10.9912},          # INTERMEDIA AGGIUNTA
         {"nome": "San Damaso Bv Vignolese", "lat": 44.6175, "lon": 10.9798},
         {"nome": "San Damaso Chiesa", "lat": 44.6192, "lon": 10.9754},
         {"nome": "Collegara", "lat": 44.6214, "lon": 10.9691},
         {"nome": "Collegara civ. 30", "lat": 44.6225, "lon": 10.9652},
         {"nome": "Geminiano", "lat": 44.6251, "lon": 10.9604},
+        {"nome": "Vignolese bv Gelmini", "lat": 44.6272, "lon": 10.9554},          # INTERMEDIA AGGIUNTA
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502},
         {"nome": "Vignolese Università", "lat": 44.6293, "lon": 10.9482},
         {"nome": "Vignolese Bv Campi", "lat": 44.6341, "lon": 10.9419},
         {"nome": "Morane civ. 180", "lat": 44.6232, "lon": 10.9319},
         {"nome": "Morane Bv Gobetti", "lat": 44.6276, "lon": 10.9312},
+        {"nome": "Morane bv Panni", "lat": 44.6291, "lon": 10.9298},              # INTERMEDIA AGGIUNTA
         {"nome": "Buon Pastore", "lat": 44.6338, "lon": 10.9234},
         {"nome": "Buon Pastore civ. 110", "lat": 44.6349, "lon": 10.9215},
+        {"nome": "Buon Pastore civ. 40", "lat": 44.6358, "lon": 10.9202},         # INTERMEDIA AGGIUNTA
         {"nome": "Amendola", "lat": 44.6369, "lon": 10.9198},
         {"nome": "Amendola civ. 45", "lat": 44.6375, "lon": 10.9162},
         {"nome": "Viale Corassori", "lat": 44.6391, "lon": 10.9082},
         {"nome": "Leonardo Da Vinci", "lat": 44.6358, "lon": 10.8994},
         {"nome": "Polo Leonardo", "lat": 44.6354, "lon": 10.8991},
+        {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},          # INTERMEDIA AGGIUNTA
         {"nome": "D'Avia Sud", "lat": 44.6455, "lon": 10.8852},
         {"nome": "D'Avia Nord", "lat": 44.6462, "lon": 10.8841},
+        {"nome": "Nazionale per Carpi civ. 40", "lat": 44.6515, "lon": 10.8992},  # INTERMEDIA AGGIUNTA
         {"nome": "Del Presidio", "lat": 44.6569, "lon": 10.9061},
         {"nome": "Pio Donati", "lat": 44.6584, "lon": 10.9038},
         {"nome": "Sant'Anna Terminal", "lat": 44.6612, "lon": 10.9015}
     ]
 }
-# 3. DIZIONARIO DELLA LINEA 3 (Formato Lungo)
+# 3. DIZIONARIO DELLA LINEA 3 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_3 = {
     "andata": [
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984},
+        {"nome": "Marzaglia Vecchia Chiesa", "lat": 44.6405, "lon": 10.7961}, # INTERMEDIA AGGIUNTA
         {"nome": "Marzaglia Nuova Chiesa", "lat": 44.6432, "lon": 10.8091},
+        {"nome": "Reggio Emilia bv Marzaglia", "lat": 44.6468, "lon": 10.8124}, # INTERMEDIA AGGIUNTA
+        {"nome": "Marzaglia/Cittanova", "lat": 44.6472, "lon": 10.8194},
         {"nome": "Cittanova Centro", "lat": 44.6528, "lon": 10.8421},
+        {"nome": "Cittanova Chiesa", "lat": 44.6525, "lon": 10.8402}, # INTERMEDIA AGGIUNTA
         {"nome": "Fiera Viale Virgilio", "lat": 44.6578, "lon": 10.8654},
+        {"nome": "Emilia Ovest ex Grand Hotel", "lat": 44.6539, "lon": 10.8754}, # INTERMEDIA AGGIUNTA
         {"nome": "Emilia Ovest Madonnina", "lat": 44.6512, "lon": 10.8992},
         {"nome": "Piazza Cittadella", "lat": 44.6499, "lon": 10.9254},
         {"nome": "Monte Kosica Stadio", "lat": 44.6514, "lon": 10.9221},
+        {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328}, # INTERMEDIA AGGIUNTA
         {"nome": "Ciro Menotti Ciro Bisi", "lat": 44.6511, "lon": 10.9432},
         {"nome": "Ciro Menotti bv Malmusi", "lat": 44.6465, "lon": 10.9398},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
@@ -246,12 +270,18 @@ linea_3 = {
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Ciro Menotti bv Malmusi", "lat": 44.6465, "lon": 10.9398},
         {"nome": "Ciro Menotti Ciro Bisi", "lat": 44.6511, "lon": 10.9432},
+        {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328}, # INTERMEDIA AGGIUNTA
         {"nome": "Monte Kosica Stadio", "lat": 44.6514, "lon": 10.9221},
         {"nome": "Piazza Cittadella", "lat": 44.6499, "lon": 10.9254},
         {"nome": "Emilia Ovest Madonnina", "lat": 44.6512, "lon": 10.8992},
+        {"nome": "Emilia Ovest ex Grand Hotel", "lat": 44.6539, "lon": 10.8754}, # INTERMEDIA AGGIUNTA
         {"nome": "Fiera Viale Virgilio", "lat": 44.6578, "lon": 10.8654},
+        {"nome": "Cittanova Chiesa", "lat": 44.6525, "lon": 10.8402}, # INTERMEDIA AGGIUNTA
         {"nome": "Cittanova Centro", "lat": 44.6528, "lon": 10.8421},
+        {"nome": "Marzaglia/Cittanova", "lat": 44.6472, "lon": 10.8194},
+        {"nome": "Reggio Emilia bv Marzaglia", "lat": 44.6468, "lon": 10.8124}, # INTERMEDIA AGGIUNTA
         {"nome": "Marzaglia Nuova Chiesa", "lat": 44.6432, "lon": 10.8091},
+        {"nome": "Marzaglia Vecchia Chiesa", "lat": 44.6405, "lon": 10.7961}, # INTERMEDIA AGGIUNTA
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984},
         {"nome": "Prefettura", "lat": 44.6449, "lon": 10.9302},
         {"nome": "Attiraglio", "lat": 44.6558, "lon": 10.9320},
@@ -265,7 +295,7 @@ linea_3 = {
         {"nome": "Cap. Montefiorino", "lat": 44.6641, "lon": 10.9695}
     ]
 }
-# 4. DIZIONARIO DELLA LINEA 4 (Formato Lungo)
+# 4. DIZIONARIO DELLA LINEA 4 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_4 = {
     "andata": [
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984},
@@ -342,7 +372,7 @@ linea_4 = {
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984}
     ]
 }
-# 5. DIZIONARIO DELLA LINEA 5 (Formato Lungo)
+# 5. DIZIONARIO DELLA LINEA 5 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_5 = {
     "andata": [
         {"nome": "Tre Olmi Capolinea", "lat": 44.6658, "lon": 10.8711},
@@ -357,6 +387,7 @@ linea_5 = {
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "San Faustino Cassa", "lat": 44.6361, "lon": 10.9124},
@@ -392,12 +423,14 @@ linea_5 = {
         {"nome": "Palazzo Europa", "lat": 44.6492, "lon": 10.9151},
         {"nome": "Caserma Pisacane", "lat": 44.6508, "lon": 10.9082},
         {"nome": "Emilia Ovest Bv Ruffini", "lat": 44.6515, "lon": 10.9011},
+        {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},  # INTERMEDIA AGGIUNTA
         {"nome": "Dalla Chiesa Centro", "lat": 44.6158, "lon": 10.9392},
         {"nome": "La Torre Capolinea", "lat": 44.6142, "lon": 10.9405}
     ],
     "ritorno": [
         {"nome": "La Torre Capolinea", "lat": 44.6142, "lon": 10.9405},
         {"nome": "Dalla Chiesa Centro", "lat": 44.6158, "lon": 10.9392},
+        {"nome": "Formigina bv Parma", "lat": 44.6315, "lon": 10.8978},  # INTERMEDIA AGGIUNTA
         {"nome": "Don Minzoni Centro", "lat": 44.6172, "lon": 10.9362},
         {"nome": "Don Minzoni Park", "lat": 44.6181, "lon": 10.9351},
         {"nome": "Morane bv Don Minzoni", "lat": 44.6195, "lon": 10.9338},
@@ -415,6 +448,7 @@ linea_5 = {
         {"nome": "San Faustino Cassa", "lat": 44.6361, "lon": 10.9124},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
@@ -429,7 +463,7 @@ linea_5 = {
         {"nome": "Tre Olmi Capolinea", "lat": 44.6658, "lon": 10.8711}
     ]
 }
-# 6. DIZIONARIO DELLA LINEA 6 (Formato Lungo)
+# 6. DIZIONARIO DELLA LINEA 6 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_6 = {
     "andata": [
         {"nome": "Quattro Ville Capolinea", "lat": 44.7142, "lon": 10.8901},
@@ -440,12 +474,14 @@ linea_6 = {
         {"nome": "Barchetta bv Nazionale", "lat": 44.6582, "lon": 10.9115},
         {"nome": "Barchetta", "lat": 44.6562, "lon": 10.9141},
         {"nome": "Viale Storchi Cimitero S. Cataldo", "lat": 44.6504, "lon": 10.9133},
+        {"nome": "Viale Storchi bv Breda", "lat": 44.6499, "lon": 10.9142}, # INTERMEDIA AGGIUNTA
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Rimembranze Bv Canalchiaro", "lat": 44.6396, "lon": 10.9231},
         {"nome": "Rimembranze", "lat": 44.6394, "lon": 10.9261},
         {"nome": "Piazza Manzoni (Stazione Piccola)", "lat": 44.6358, "lon": 10.9292},
         {"nome": "Giardini Direzionale 70", "lat": 44.6321, "lon": 10.9168},
         {"nome": "Gallo bv Giardini", "lat": 44.6274, "lon": 10.9131},
+        {"nome": "Giardini bv Gozzi", "lat": 44.6332, "lon": 10.8982}, # INTERMEDIA AGGIUNTA
         {"nome": "Formigina Parco Amendola", "lat": 44.6242, "lon": 10.9084},
         {"nome": "Formigina bv Cannizzaro", "lat": 44.6248, "lon": 10.8951},
         {"nome": "Formigina civ. 210", "lat": 44.6225, "lon": 10.9052},
@@ -458,12 +494,14 @@ linea_6 = {
         {"nome": "Formigina civ. 210", "lat": 44.6225, "lon": 10.9052},
         {"nome": "Formigina bv Cannizzaro", "lat": 44.6248, "lon": 10.8951},
         {"nome": "Formigina Parco Amendola", "lat": 44.6242, "lon": 10.9084},
+        {"nome": "Giardini bv Gozzi", "lat": 44.6332, "lon": 10.8982}, # INTERMEDIA AGGIUNTA
         {"nome": "Gallo bv Giardini", "lat": 44.6274, "lon": 10.9131},
         {"nome": "Giardini Direzionale 70", "lat": 44.6321, "lon": 10.9168},
         {"nome": "Piazza Manzoni (Stazione Piccola)", "lat": 44.6358, "lon": 10.9292},
         {"nome": "Rimembranze", "lat": 44.6394, "lon": 10.9261},
         {"nome": "Rimembranze Bv Canalchiaro", "lat": 44.6396, "lon": 10.9231},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
+        {"nome": "Viale Storchi bv Breda", "lat": 44.6499, "lon": 10.9142}, # INTERMEDIA AGGIUNTA
         {"nome": "Viale Storchi Cimitero S. Cataldo", "lat": 44.6504, "lon": 10.9133},
         {"nome": "Barchetta", "lat": 44.6562, "lon": 10.9141},
         {"nome": "Barchetta bv Nazionale", "lat": 44.6582, "lon": 10.9115},
@@ -474,7 +512,7 @@ linea_6 = {
         {"nome": "Quattro Ville Capolinea", "lat": 44.7142, "lon": 10.8901}
     ]
 }
-# 7. DIZIONARIO DELLA LINEA 7 (Formato Lungo)
+# 7. DIZIONARIO DELLA LINEA 7 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_7 = {
     "andata": [
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502},
@@ -483,6 +521,7 @@ linea_7 = {
         {"nome": "Del Pozzo Università", "lat": 44.6381, "lon": 10.9448},
         {"nome": "Via del Pozzo civ. 70", "lat": 44.6394, "lon": 10.9452},
         {"nome": "Piazzale Boschetti", "lat": 44.6412, "lon": 10.9431},
+        {"nome": "Moreali bv Cucchiari", "lat": 44.6419, "lon": 10.9384}, # INTERMEDIA AGGIUNTA
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Viale Caduti in Guerra", "lat": 44.6468, "lon": 10.9262},
         {"nome": "Caduti in Guerra Giardini", "lat": 44.6482, "lon": 10.9271},
@@ -513,6 +552,7 @@ linea_7 = {
         {"nome": "Caduti in Guerra Giardini", "lat": 44.6482, "lon": 10.9271},
         {"nome": "Viale Caduti in Guerra", "lat": 44.6468, "lon": 10.9262},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
+        {"nome": "Moreali bv Cucchiari", "lat": 44.6419, "lon": 10.9384}, # INTERMEDIA AGGIUNTA
         {"nome": "Piazzale Boschetti", "lat": 44.6412, "lon": 10.9431},
         {"nome": "Via del Pozzo civ. 70", "lat": 44.6394, "lon": 10.9452},
         {"nome": "Del Pozzo Università", "lat": 44.6381, "lon": 10.9448},
@@ -521,7 +561,7 @@ linea_7 = {
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502}
     ]
 }
-# 8. DIZIONARIO DELLA LINEA 8 (Formato Lungo)
+# 8. DIZIONARIO DELLA LINEA 8 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_8 = {
     "andata": [
         {"nome": "Sadat Capolinea", "lat": 44.6534, "lon": 10.9022},
@@ -534,6 +574,7 @@ linea_8 = {
         {"nome": "Largo Sant'Agostino", "lat": 44.6481, "lon": 10.9212},
         {"nome": "Piazza Matteotti", "lat": 44.6471, "lon": 10.9248},
         {"nome": "Via Emilia Centro", "lat": 44.6475, "lon": 10.9241},
+        {"nome": "Collegio", "lat": 44.6462, "lon": 10.9291},                # INTERMEDIA AGGIUNTA
         {"nome": "San Pietro", "lat": 44.6445, "lon": 10.9332},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Moreali bv Cucchiari", "lat": 44.6419, "lon": 10.9384},
@@ -541,6 +582,7 @@ linea_8 = {
         {"nome": "Moreali civ. 140", "lat": 44.6398, "lon": 10.9458},
         {"nome": "Moreali Scuole", "lat": 44.6385, "lon": 10.9492},
         {"nome": "Moreali bv Saliceto Panaro", "lat": 44.6371, "lon": 10.9531},
+        {"nome": "Emilia Est Aci", "lat": 44.6398, "lon": 10.9542},           # INTERMEDIA AGGIUNTA
         {"nome": "Gazzotti bv Emilia Est", "lat": 44.6352, "lon": 10.9621},
         {"nome": "Gazzotti civ. 40", "lat": 44.6341, "lon": 10.9628},
         {"nome": "Gazzotti Capolinea", "lat": 44.6331, "lon": 10.9634}
@@ -549,6 +591,7 @@ linea_8 = {
         {"nome": "Gazzotti Capolinea", "lat": 44.6331, "lon": 10.9634},
         {"nome": "Gazzotti civ. 40", "lat": 44.6341, "lon": 10.9628},
         {"nome": "Gazzotti bv Emilia Est", "lat": 44.6352, "lon": 10.9621},
+        {"nome": "Emilia Est Aci", "lat": 44.6398, "lon": 10.9542},           # INTERMEDIA AGGIUNTA
         {"nome": "Moreali bv Saliceto Panaro", "lat": 44.6371, "lon": 10.9531},
         {"nome": "Moreali Scuole", "lat": 44.6385, "lon": 10.9492},
         {"nome": "Moreali civ. 140", "lat": 44.6398, "lon": 10.9458},
@@ -556,6 +599,7 @@ linea_8 = {
         {"nome": "Moreali bv Cucchiari", "lat": 44.6419, "lon": 10.9384},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "San Pietro", "lat": 44.6445, "lon": 10.9332},
+        {"nome": "Collegio", "lat": 44.6462, "lon": 10.9291},                # INTERMEDIA AGGIUNTA
         {"nome": "Via Emilia Centro", "lat": 44.6475, "lon": 10.9241},
         {"nome": "Piazza Matteotti", "lat": 44.6471, "lon": 10.9248},
         {"nome": "Largo Sant'Agostino", "lat": 44.6481, "lon": 10.9212},
@@ -568,48 +612,54 @@ linea_8 = {
         {"nome": "Sadat Capolinea", "lat": 44.6534, "lon": 10.9022}
     ]
 }
-# 9. DIZIONARIO DELLA LINEA 9 (Formato Lungo)
+# 9. DIZIONARIO DELLA LINEA 9 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_9 = {
     "andata": [
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984},
         {"nome": "Marzaglia Nuova Chiesa", "lat": 44.6432, "lon": 10.8091},
         {"nome": "Marzaglia/Cittanova", "lat": 44.6472, "lon": 10.8194},
-        {"nome": "Emilia Ovest Grandemilia", "lat": 44.6525, "lon": 10.8491},
+        {"nome": "Cittanova Chiesa", "lat": 44.6525, "lon": 10.8402},       # INTERMEDIA AGGIUNTA
         {"nome": "Cittanova Centro", "lat": 44.6528, "lon": 10.8421},
+        {"nome": "Emilia Ovest Grandemilia", "lat": 44.6525, "lon": 10.8491},
         {"nome": "Fiera Viale Virgilio", "lat": 44.6578, "lon": 10.8654},
         {"nome": "Emilia Ovest Madonnina", "lat": 44.6512, "lon": 10.8992},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
+        {"nome": "Caduti in Guerra Tempio", "lat": 44.6499, "lon": 10.9298},  # INTERMEDIA AGGIUNTA
         {"nome": "Mazzoni Posta", "lat": 44.6568, "lon": 10.9362},
         {"nome": "Menotti Poligrafico", "lat": 44.6501, "lon": 10.9419},
         {"nome": "Ciro Menotti Ciro Bisi", "lat": 44.6511, "lon": 10.9432},
         {"nome": "Divisione Acqui", "lat": 44.6554, "lon": 10.9492},
         {"nome": "Ipercoop I Portali", "lat": 44.6582, "lon": 10.9511},
+        {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},   # INTERMEDIA AGGIUNTA
         {"nome": "Vignolese Campi Ospedale", "lat": 44.6355, "lon": 10.9439},
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502}
     ],
     "ritorno": [
         {"nome": "Gottardi Terminal Università", "lat": 44.6301, "lon": 10.9502},
         {"nome": "Vignolese Campi Ospedale", "lat": 44.6355, "lon": 10.9439},
+        {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},   # INTERMEDIA AGGIUNTA
         {"nome": "Ipercoop I Portali", "lat": 44.6582, "lon": 10.9511},
         {"nome": "Divisione Acqui", "lat": 44.6554, "lon": 10.9492},
         {"nome": "Ciro Menotti Ciro Bisi", "lat": 44.6511, "lon": 10.9432},
         {"nome": "Menotti Poligrafico", "lat": 44.6501, "lon": 10.9419},
         {"nome": "Mazzoni Posta", "lat": 44.6568, "lon": 10.9362},
+        {"nome": "Caduti in Guerra Tempio", "lat": 44.6499, "lon": 10.9298},  # INTERMEDIA AGGIUNTA
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Emilia Ovest Madonnina", "lat": 44.6512, "lon": 10.8992},
         {"nome": "Fiera Viale Virgilio", "lat": 44.6578, "lon": 10.8654},
         {"nome": "Cittanova Centro", "lat": 44.6528, "lon": 10.8421},
+        {"nome": "Cittanova Chiesa", "lat": 44.6525, "lon": 10.8402},       # INTERMEDIA AGGIUNTA
         {"nome": "Emilia Ovest Grandemilia", "lat": 44.6525, "lon": 10.8491},
         {"nome": "Marzaglia/Cittanova", "lat": 44.6472, "lon": 10.8194},
         {"nome": "Marzaglia Nuova Chiesa", "lat": 44.6432, "lon": 10.8091},
         {"nome": "Marzaglia Vecchia Terminal", "lat": 44.6411, "lon": 10.7984}
     ]
 }
-# 10. DIZIONARIO DELLA LINEA 10 (Formato Lungo)
+# 10. DIZIONARIO DELLA LINEA 10 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_10 = {
     "andata": [
         {"nome": "Albareto Chiesa", "lat": 44.6908, "lon": 10.9621},
@@ -618,6 +668,7 @@ linea_10 = {
         {"nome": "Albareto civ. 210", "lat": 44.6812, "lon": 10.9541},
         {"nome": "Gramsci Fanti", "lat": 44.6629, "lon": 10.9391},
         {"nome": "Gramsci Terminal", "lat": 44.6644, "lon": 10.9427},
+        {"nome": "Sacca Mercato", "lat": 44.6599, "lon": 10.9341},          # INTERMEDIA AGGIUNTA
         {"nome": "Piazza Natale Bruni", "lat": 44.6539, "lon": 10.9334},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
@@ -627,12 +678,14 @@ linea_10 = {
         {"nome": "San Faustino Cassa", "lat": 44.6361, "lon": 10.9124},
         {"nome": "San Faustino bv Luosi", "lat": 44.6372, "lon": 10.9112},
         {"nome": "Viale Corassori", "lat": 44.6391, "lon": 10.9082},
+        {"nome": "Caduti sul Lavoro bivio Wagner", "lat": 44.6315, "lon": 10.9734}, # INTERMEDIA AGGIUNTA
         {"nome": "Tevere Centro", "lat": 44.6268, "lon": 10.9122},
         {"nome": "Tevere Capolinea", "lat": 44.6253, "lon": 10.9114}
     ],
     "ritorno": [
         {"nome": "Tevere Capolinea", "lat": 44.6253, "lon": 10.9114},
         {"nome": "Tevere Centro", "lat": 44.6268, "lon": 10.9122},
+        {"nome": "Caduti sul Lavoro bivio Wagner", "lat": 44.6315, "lon": 10.9734}, # INTERMEDIA AGGIUNTA
         {"nome": "Viale Corassori", "lat": 44.6391, "lon": 10.9082},
         {"nome": "San Faustino bv Luosi", "lat": 44.6372, "lon": 10.9112},
         {"nome": "San Faustino Cassa", "lat": 44.6361, "lon": 10.9124},
@@ -642,6 +695,7 @@ linea_10 = {
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Piazza Natale Bruni", "lat": 44.6539, "lon": 10.9334},
+        {"nome": "Sacca Mercato", "lat": 44.6599, "lon": 10.9341},          # INTERMEDIA AGGIUNTA
         {"nome": "Gramsci Terminal", "lat": 44.6644, "lon": 10.9427},
         {"nome": "Gramsci Fanti", "lat": 44.6629, "lon": 10.9391},
         {"nome": "Albareto civ. 210", "lat": 44.6812, "lon": 10.9541},
@@ -650,7 +704,7 @@ linea_10 = {
         {"nome": "Albareto Chiesa", "lat": 44.6908, "lon": 10.9621}
     ]
 }
-# 11. DIZIONARIO DELLA LINEA 11 (Formato Lungo)
+# 11. DIZIONARIO DELLA LINEA 11 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_11 = {
     "andata": [
         {"nome": "Suore Cassiani", "lat": 44.6672, "lon": 10.9251},
@@ -660,6 +714,7 @@ linea_11 = {
         {"nome": "Ritiro Sacca", "lat": 44.6581, "lon": 10.9372},
         {"nome": "Mazzoni Posta", "lat": 44.6568, "lon": 10.9362},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
+        {"nome": "Caduti in Guerra Orto Botanico", "lat": 44.6468, "lon": 10.9262}, # INTERMEDIA AGGIUNTA
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Viale Storchi ex AMCM", "lat": 44.6489, "lon": 10.9155},
@@ -682,6 +737,7 @@ linea_11 = {
         {"nome": "Viale Storchi ex AMCM", "lat": 44.6489, "lon": 10.9155},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
+        {"nome": "Caduti in Guerra Orto Botanico", "lat": 44.6468, "lon": 10.9262}, # INTERMEDIA AGGIUNTA
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Mazzoni Posta", "lat": 44.6568, "lon": 10.9362},
         {"nome": "Ritiro Sacca", "lat": 44.6581, "lon": 10.9372},
@@ -691,7 +747,7 @@ linea_11 = {
         {"nome": "Suore Cassiani", "lat": 44.6672, "lon": 10.9251}
     ]
 }
-# 12. DIZIONARIO DELLA LINEA 12 (Formato Lungo)
+# 12. DIZIONARIO DELLA LINEA 12 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_12 = {
     "andata": [
         {"nome": "Morane Parrocchia", "lat": 44.6184, "lon": 10.9322},
@@ -706,7 +762,7 @@ linea_12 = {
         {"nome": "Cinema Estivo", "lat": 44.6379, "lon": 10.9265},
         {"nome": "Rimembranze Bv Selmi", "lat": 44.6391, "lon": 10.9258},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
-        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388},
+        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388}, # INTERMEDIA AGGIUNTA
         {"nome": "Emilia Est bv Refrigerio", "lat": 44.6425, "lon": 10.9421},
         {"nome": "Emilia Est bv Vignolese", "lat": 44.6419, "lon": 10.9463},
         {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},
@@ -721,7 +777,7 @@ linea_12 = {
         {"nome": "Emilia Est Policlinico", "lat": 44.6408, "lon": 10.9498},
         {"nome": "Emilia Est bv Vignolese", "lat": 44.6419, "lon": 10.9463},
         {"nome": "Emilia Est bv Refrigerio", "lat": 44.6425, "lon": 10.9421},
-        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388},
+        {"nome": "Emilia Est bv Ciro Menotti", "lat": 44.6431, "lon": 10.9388}, # INTERMEDIA AGGIUNTA
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Rimembranze Bv Selmi", "lat": 44.6391, "lon": 10.9258},
         {"nome": "Cinema Estivo", "lat": 44.6379, "lon": 10.9265},
@@ -736,15 +792,17 @@ linea_12 = {
         {"nome": "Morane Parrocchia", "lat": 44.6184, "lon": 10.9322}
     ]
 }
-# 13. DIZIONARIO DELLA LINEA 13 (Formato Lungo)
+# 13. DIZIONARIO DELLA LINEA 13 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_13 = {
     "andata": [
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Rimembranze Bv Canalchiaro", "lat": 44.6396, "lon": 10.9231},
+        {"nome": "Giardini bv Dei Tintori", "lat": 44.6361, "lon": 10.9174}, # INTERMEDIA AGGIUNTA
         {"nome": "Giardini Direzionale 70", "lat": 44.6321, "lon": 10.9168},
         {"nome": "Gallo bv Giardini", "lat": 44.6274, "lon": 10.9131},
+        {"nome": "Gallo Pascoli", "lat": 44.6291, "lon": 10.9208},           # INTERMEDIA AGGIUNTA
         {"nome": "Gallo Salumeria", "lat": 44.6252, "lon": 10.9101},
         {"nome": "Giardini bv Martiniana", "lat": 44.6155, "lon": 10.8954},
         {"nome": "Giardini civ. 800", "lat": 44.6121, "lon": 10.8905},
@@ -757,21 +815,24 @@ linea_13 = {
         {"nome": "Giardini civ. 800", "lat": 44.6121, "lon": 10.8905},
         {"nome": "Giardini bv Martiniana", "lat": 44.6155, "lon": 10.8954},
         {"nome": "Gallo Salumeria", "lat": 44.6252, "lon": 10.9101},
+        {"nome": "Gallo Pascoli", "lat": 44.6291, "lon": 10.9208},           # INTERMEDIA AGGIUNTA
         {"nome": "Gallo bv Giardini", "lat": 44.6274, "lon": 10.9131},
         {"nome": "Giardini Direzionale 70", "lat": 44.6321, "lon": 10.9168},
+        {"nome": "Giardini bv Dei Tintori", "lat": 44.6361, "lon": 10.9174}, # INTERMEDIA AGGIUNTA
         {"nome": "Rimembranze Bv Canalchiaro", "lat": 44.6396, "lon": 10.9231},
         {"nome": "Modena Autostazione", "lat": 44.6483, "lon": 10.9192},
         {"nome": "Monte Kosica bv Ganaceto", "lat": 44.6521, "lon": 10.9264},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328}
     ]
 }
-# 15. DIZIONARIO DELLA LINEA 15 (Formato Lungo)
+# 15. DIZIONARIO DELLA LINEA 15 AGGIORNATO (Con fermate intermedie - Opzione A)
 linea_15 = {
     "andata": [
         {"nome": "Polo Leonardo Capolinea", "lat": 44.6352, "lon": 10.8988},
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "Luosi bv Fattori", "lat": 44.6424, "lon": 10.9118},
@@ -783,12 +844,14 @@ linea_15 = {
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
         {"nome": "Viale Caduti in Guerra", "lat": 44.6468, "lon": 10.9262},
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
+        {"nome": "Viale dell'Aeronautica civ. 15", "lat": 44.6555, "lon": 10.9362}, # INTERMEDIA AGGIUNTA
         {"nome": "Viale dell'Aeronautica civ. 30", "lat": 44.6562, "lon": 10.9381},
         {"nome": "Viale dell'Aeronautica Capolinea", "lat": 44.6575, "lon": 10.9398}
     ],
     "ritorno": [
         {"nome": "Viale dell'Aeronautica Capolinea", "lat": 44.6575, "lon": 10.9398},
         {"nome": "Viale dell'Aeronautica civ. 30", "lat": 44.6562, "lon": 10.9381},
+        {"nome": "Viale dell'Aeronautica civ. 15", "lat": 44.6555, "lon": 10.9362}, # INTERMEDIA AGGIUNTA
         {"nome": "Stazione FS (Piazza Dante)", "lat": 44.6548, "lon": 10.9328},
         {"nome": "Viale Caduti in Guerra", "lat": 44.6468, "lon": 10.9262},
         {"nome": "Largo Garibaldi", "lat": 44.6437, "lon": 10.9344},
@@ -800,13 +863,14 @@ linea_15 = {
         {"nome": "Luosi bv Fattori", "lat": 44.6424, "lon": 10.9118},
         {"nome": "Luosi bv San Faustino", "lat": 44.6401, "lon": 10.9102},
         {"nome": "Palestra San Faustino", "lat": 44.6382, "lon": 10.9079},
+        {"nome": "Marconi bv Giglioli", "lat": 44.6380, "lon": 10.9055},  # INTERMEDIA AGGIUNTA
         {"nome": "Marconi bv Corassori", "lat": 44.6377, "lon": 10.9031},
         {"nome": "Istituto Deledda-Cattaneo", "lat": 44.6368, "lon": 10.8995},
         {"nome": "Istituto Guarini", "lat": 44.6361, "lon": 10.8990},
         {"nome": "Polo Leonardo Capolinea", "lat": 44.6352, "lon": 10.8988}
     ]
 }
-# 3. RACCOGLITORE GLOBALE (Dichiara al sito quali linee caricare nei menu)
+# 3. RACCOGLITORE GLOBALE DEFINITIVO
 DATABASE_LINEE = {
     "Linea 1": linea_1,
     "Linea 2": linea_2,
