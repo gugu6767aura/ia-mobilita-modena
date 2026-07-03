@@ -2,7 +2,7 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
-import requests  # Il nostro navigatore invisibile per trovare le strade
+import requests  # Il nostro navigatore invisibile per trovare le curve stradali
 
 # 1. CONFIGURAZIONE INTERFACCIA WIDE
 st.set_page_config(layout="wide", page_title="Assistente IA Mobilità - Modena", page_icon="🚌")
@@ -10,7 +10,7 @@ st.set_page_config(layout="wide", page_title="Assistente IA Mobilità - Modena",
 st.title("🚌 Assistente IA Mobilità - Modena")
 st.markdown("---")
 
-# Carichiamo il database delle linee
+# Carichiamo il database esterno delle linee
 try:
     from dati_linee import DATABASE_LINEE, COLORI_LINEE
 except ImportError:
@@ -77,30 +77,32 @@ with col_bot1:
         st.success("🗺️ **Rotta Trovata!** Cammina fino a Muratori, prendi la **Linea 6** verso Via Giardini.")
         st.link_button("🌐 Apri Navigatore Google Maps", f"https://google.com{lat_attiva},{lon_attiva}")
 
-# --- COLONNA 2: MAPPA LIVE (OPZIONE B - STRADE REALI) ---
+# --- COLONNA 2: MAPPA LIVE (OPZIONE B - STRADE REALI CON CURVE) ---
 with col_bot2:
     st.subheader("🗺️ Mappa Live")
     
     # Centra la mappa sulla fermata scelta dal menu
     mappa_modena = folium.Map(location=[lat_attiva, lon_attiva], zoom_start=14, tiles="CartoDB positron")
     
-    # Chiediamo al navigatore le strade vere unendo le fermate
+    # Prepariamo la richiesta stradale unendo in ordine tutte le fermate della linea
     stringa_coordinate = ";".join([f"{f['lon']},{f['lat']}" for f in lista_fermate])
     url_navigatore = f"http://project-osrm.org{stringa_coordinate}?overview=full&geometries=geojson"
     
-    # Linea retta provvisoria di sicurezza
+    # Linea retta di riserva se internet o il server non dovessero funzionare
     coordinate_strada_vera = [[f["lat"], f["lon"]] for f in lista_fermate]
     
     try:
-        risposta = requests.get(url_navigatore, timeout=3).json()
+        # Interroghiamo il server stradale
+        risposta = requests.get(url_navigatore, timeout=4).json()
         if risposta.get("code") == "Ok":
+            # Estraiamo la geometria corretta della rotta stradale reale
             punti_strada = risposta["routes"][0]["geometry"]["coordinates"]
-            # Invertiamo da [lon, lat] a [lat, lon] per far felice la mappa Folium
+            # Invertiamo ogni punto da [lon, lat] a [lat, lon] per il disegno della mappa Folium
             coordinate_strada_vera = [[punto[1], punto[0]] for punto in punti_strada]
-    except:
-        pass  # Se internet ha un problema, usa la linea dritta temporanea
+    except Exception as e:
+        pass  # In caso di errore temporaneo di rete, disegna la linea retta senza rompere il sito
 
-    # Disegniamo la bellissima linea curva sulle strade
+    # Disegniamo la linea fluida che segue perfettamente le curve di Modena
     colore_linea = COLORI_LINEE.get(linea_selezionata, "#3498db")
     folium.PolyLine(
         locations=coordinate_strada_vera,
@@ -109,7 +111,7 @@ with col_bot2:
         opacity=0.85
     ).add_to(mappa_modena)
     
-    # Mettiamo i bollini per tutte le fermate
+    # Posizioniamo i bollini per tutte le singole fermate
     for fermata in lista_fermate:
         is_selected = (fermata["nome"] == fermata_scelta)
         
@@ -124,5 +126,5 @@ with col_bot2:
             )
         ).add_to(mappa_modena)
         
-    # Renderizza la mappa a schermo
+    # Renderizza la mappa aggiornata sullo schermo
     st_folium(mappa_modena, width=500, height=380, key=f"map_{linea_selezionata}_{chiave_direzione}", returned_objects=[])
