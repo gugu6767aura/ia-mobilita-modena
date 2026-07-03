@@ -1,7 +1,7 @@
 import streamlit as st, requests, pandas as pd, folium, math
 from groq import Groq
 from streamlit_folium import st_folium
-from fermate import DB_FERMATE
+from fermate import DB_FERMATE 
 
 st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
 st.title("🚌 Assistente IA Mobilità - Modena")
@@ -46,11 +46,14 @@ def geocode(via):
 
 def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
     try:
-        url = f"http://project-osrm.org{profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
+        url = f"http://project-osrm.org{profile}/v1/{start_lon},{start_lat};{end_lon},{end_lat}"
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
             data = r.json()
-            return [[c, c] for c in data["routes"]["geometry"]["coordinates"]], max(1, round(data["routes"]["duration"] / 60))
+            # Inverte le coordinate (da [lon, lat] di OSRM a [lat, lon] di Folium)
+            geom = [[point[1], point[0]] for point in data["routes"][0]["geometry"]["coordinates"]]
+            duration = max(1, round(data["routes"][0]["duration"] / 60))
+            return geom, duration
     except: pass
     return [[start_lat, start_lon], [end_lat, end_lon]], 5
 
@@ -80,10 +83,13 @@ def find_nearest_osm_bus_stop(lat, lon):
                 return best_name, best_coord, min_d
     except: pass
     
+    # Fallback se le API Overpass falliscono o non trovano nulla
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
-        d = dist(lat, lon, coord, coord)
-        if d < md: md, nf, cf = d, name, coord
+        # CORRETTO: spacchettamento corretto delle tuple di DB_FERMATE
+        d = dist(lat, lon, coord[0], coord[1])
+        if d < md: 
+            md, nf, cf = d, name, coord
     return nf, cf, md
 
 df_bus = get_live_data()
@@ -101,7 +107,7 @@ with col1:
                     messages=[{"role": "system", "content": f"Sei l'assistente bus di Modena. Live:\n{df_bus.to_string()}"}, {"role": "user", "content": q}],
                     model="llama-3.3-70b-versatile"
                 )
-                st.info(cc.choices.message.content)
+                st.info(cc.choices[0].message.content)
             except Exception as e: st.error(f"Errore: {e}")
 
 with col2:
@@ -118,13 +124,14 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            # CORREZIONE BUG TRACEBACK: spacchettamento corretto delle tuple di coordinate
-            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p, c_p)
-            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a, c_a)
+            # CORRETTO: Passaggio di latitudine e longitudine separate usando gli indici [0] e [1]
+            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p[0], c_p[1])
+            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a[0], c_a[1])
             
-            strada_piedi_1, t_p1 = get_route_geometry(c_p, c_p, co_fp, co_fp, "foot")
-            strada_bus, t_bus = get_route_geometry(co_fp, co_fp, co_fa, co_fa, "driving")
-            strada_piedi_2, t_p2 = get_route_geometry(co_fa, co_fa, c_a, c_a, "foot")
+            # CORRETTO: Spacchettamento delle tuple per le rotte piedi/bus
+            strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
+            strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
+            strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
             
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
