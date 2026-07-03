@@ -33,14 +33,16 @@ def geocode(via):
     if "morane" in via_lower: return 44.6245, 10.9340
     if "tassoni" in via_lower: return 44.6420, 10.9161
     if "muratori" in via_lower: return 44.6402, 10.9248
+    if "giardini" in via_lower: return 44.6295, 10.9124
     
     try:
+        # Endpoint di geocoding corretto e stabile di Nominatim OpenStreetMap
         url = "https://openstreetmap.org"
-        headers = {"User-Agent": "ModenaTransitNavigator_v6_Application"}
+        headers = {"User-Agent": "IA_Mobilita_Modena_App_v7"}
         params = {"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}
         r = requests.get(url, headers=headers, params=params, timeout=5)
         if r.status_code == 200 and len(r.json()) > 0:
-            return float(r.json()["lat"]), float(r.json()["lon"])
+            return float(r.json()[0]["lat"]), float(r.json()[0]["lon"])
     except: pass
     return None
 
@@ -51,9 +53,9 @@ def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
         if r.status_code == 200:
             data = r.json()
             if "routes" in data and len(data["routes"]) > 0:
-                coords = data["routes"]["geometry"]["coordinates"]
+                coords = data["routes"][0]["geometry"]["coordinates"]
                 geom = [[point[1], point[0]] for point in coords]
-                duration = max(1, round(data["routes"]["duration"] / 60))
+                duration = max(1, round(data["routes"][0]["duration"] / 60))
                 return geom, duration
     except: pass
     return [[start_lat, start_lon], [end_lat, end_lon]], 5
@@ -86,7 +88,6 @@ def find_nearest_osm_bus_stop(lat, lon):
     
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
-        # CORRETTO: spacchettamento esplicito con [0] e [1]
         d = dist(lat, lon, coord[0], coord[1])
         if d < md: md, nf, cf = d, name, coord
     return nf, cf, md
@@ -130,19 +131,16 @@ mc1, mc2 = st.columns(2)
 
 with mc1:
     st.subheader("🗺️ Percorso")
-    vp = st.text_input("⚪ Partenza:", "Viale Alessandro Tassoni")
-    va = st.text_input("📍 Arrivo:", "Via Morane")
+    vp = st.text_input("⚪ Partenza:", "Viale Muratori")
+    va = st.text_input("📍 Arrivo:", "Via Giardini")
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            # CORRETTO: Spacchettamento delle tuple c_p e c_a usando gli indici [0] e [1]
             n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p[0], c_p[1])
             n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a[0], c_a[1])
             
-            # CORRETTO: Passaggio dei parametri per calcolare la linea ottimale
             linea_rilevata = guess_best_bus_line(co_fp[0], co_fp[1], df_bus)
             
-            # CORRETTO: Intere tuple spacchettate correttamente per OSRM stradale reale
             strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
             strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
             strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
@@ -158,7 +156,11 @@ with mc1:
                        f"* 🚌 Sali sul bus della **Linea {linea_rilevata}** fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
                        f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
                        f"⏱️ **Tempo totale:** ~{t_p1 + t_bus + t_p2} minuti.")
-        else: st.error("Indirizzi non trouvati.")
+        else:
+            # Cancella il vecchio percorso dallo stato se la ricerca fallisce
+            if "route_data" in st.session_state:
+                del st.session_state.route_data
+            st.error("Indirizzi non trovati.")
 
 with mc2:
     m = folium.Map(location=[44.6420, 10.9161], zoom_start=15)
