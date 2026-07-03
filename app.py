@@ -1,4 +1,8 @@
-import streamlit as st, requests, pandas as pd, folium, math
+import streamlit as st
+import requests
+import pandas as pd
+import folium
+import math
 from groq import Groq
 from streamlit_folium import st_folium
 from fermate import DB_FERMATE 
@@ -36,7 +40,6 @@ def geocode(via):
     if "giardini" in via_lower: return 44.6295, 10.9124
     
     try:
-        # Endpoint di geocoding corretto e stabile di Nominatim OpenStreetMap
         url = "https://openstreetmap.org"
         headers = {"User-Agent": "IA_Mobilita_Modena_App_v7"}
         params = {"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}
@@ -47,8 +50,11 @@ def geocode(via):
     return None
 
 def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
+    # Mappatura profili corretti per OSRM (driving/foot)
+    osrm_profile = "driving" if profile == "driving" else "foot"
     try:
-        url = f"http://project-osrm.org{profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
+        # Endpoint OSRM corretto con routing v1
+        url = f"http://project-osrm.org{osrm_profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
             data = r.json()
@@ -57,7 +63,9 @@ def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
                 geom = [[point[1], point[0]] for point in coords]
                 duration = max(1, round(data["routes"][0]["duration"] / 60))
                 return geom, duration
-    except: pass
+    except Exception as e:
+        pass
+    # Linea retta di backup in caso di errore di rete
     return [[start_lat, start_lon], [end_lat, end_lon]], 5
 
 def dist(lat1, lon1, lat2, lon2):
@@ -148,7 +156,7 @@ with mc1:
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
                 "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2,
-                "linea": linea_rilevata
+                "linea": linea_rilevata, "t_p1": t_p1, "t_bus": t_bus, "t_p2": t_p2
             }
             
             st.success(f"🚏 **Percorso trovato!**\n"
@@ -157,7 +165,6 @@ with mc1:
                        f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
                        f"⏱️ **Tempo totale:** ~{t_p1 + t_bus + t_p2} minuti.")
         else:
-            # Cancella il vecchio percorso dallo stato se la ricerca fallisce
             if "route_data" in st.session_state:
                 del st.session_state.route_data
             st.error("Indirizzi non trovati.")
@@ -170,11 +177,12 @@ with mc2:
         folium.Marker(rd["cp"], popup=f"Partenza: {vp}", icon=folium.Icon(color="gray", icon="user", prefix="fa")).add_to(m)
         folium.Marker(rd["ca"], popup=f"Arrivo: {va}", icon=folium.Icon(color="red", icon="flag")).add_to(m)
         
+        # Disegno delle polilinee reali sulla mappa
+        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, opacity=0.7, tooltip="A piedi alla fermata").add_to(m)
+        folium.PolyLine(rd["geom_bus"], color="green", weight=6, opacity=0.8, tooltip=f"Tratta Bus Linea {rd['linea']}").add_to(m)
+        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, opacity=0.7, tooltip="A piedi a destinazione").add_to(m)
+        
         folium.CircleMarker(location=rd["cfp"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Sali qui: {rd['nfp']} (Linea {rd['linea']})").add_to(m)
         folium.CircleMarker(location=rd["cfa"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Scendi qui: {rd['nfa']}").add_to(m)
-        
-        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
-        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip=f"In Bus (Linea {rd['linea']})").add_to(m)
-        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
-        
-    st_folium(m, width=650, height=350)
+    
+    st_folium(m, use_container_width=True, height=500)
