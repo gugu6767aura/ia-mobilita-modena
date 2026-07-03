@@ -29,7 +29,6 @@ def get_live_data():
     ])
 
 def geocode(via):
-    # Soluzione di fallback immediata: se cerca Barozzi o Morane, usa le coordinate reali senza interrogare il server
     if "barozzi" in via.lower(): return 44.6441, 10.9190
     if "morane" in via.lower(): return 44.6245, 10.9340
     try:
@@ -39,16 +38,23 @@ def geocode(via):
     except: pass
     return None
 
-def get_route_geometry(start_coords, end_coords):
-    """Interroga il motore stradale gratuito OSRM per ricavare la spezzata esatta delle strade da percorrere"""
+def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
+    """Calcola il percorso reale lungo le strade e restituisce la geometria e la durata in minuti"""
     try:
-        url = f"http://project-osrm.org{start_coords[1]},{start_coords[0]};{end_coords[1]},{end_coords[0]}"
+        # Sintassi corretta OSRM: lon,lat;lon,lat
+        url = f"http://project-osrm.org{profile}/{start_lon},{start_lat};{end_lon},{end_lat}"
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
-            coords = r.json()["routes"][0]["geometry"]["coordinates"]
-            return [[c[1], c[0]] for c in coords]
+            data = r.json()
+            coords = data["routes"][0]["geometry"]["coordinates"]
+            duration_minutes = round(data["routes"][0]["duration"] / 60)
+            # Converte da [lon, lat] di OSRM a [lat, lon] di Folium
+            return [[c[1], c[0]] for c in coords], max(1, duration_minutes)
     except: pass
-    return [start_coords, end_coords] # Fallback in linea retta se il server OSRM fallisce
+    # Fallback geometrico se il server non risponde
+    dist_approx = math.sqrt((end_lat-start_lat)**2 + (end_lon-start_lon)**2) * 111
+    speed = 4.0 if profile == "foot" else 20.0
+    return [[start_lat, start_lon], [end_lat, end_lon]], max(1, round((dist_approx / speed) * 60))
 
 def dist(lat1, lon1, lat2, lon2):
     a = math.sin(math.radians(lat2-lat1)/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(math.radians(lon2-lon1)/2)**2
@@ -76,7 +82,7 @@ with col1:
                     messages=[{"role": "system", "content": f"Sei l'assistente bus di Modena. Linee 1-13. Stato live:\n{df_bus.to_string()}"}, {"role": "user", "content": q}],
                     model="llama-3.3-70b-versatile"
                 )
-                st.info(cc.choices.message.content)
+                st.info(cc.choices[0].message.content)
             except Exception as e: st.error(f"Errore: {e}")
 
 with col2:
@@ -93,21 +99,26 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            n_fp, co_fp, d_p = find_near(c_p[0], c_p[1])
-            n_fa, co_fa, d_a = find_near(c_a[0], c_a[1])
+            n_fp, co_fp, _ = find_near(c_p[0], c_p[1])
+            n_fa, co_fa, _ = find_near(c_a[0], c_a[1])
             
-            # Calcolo dei segmenti stradali effettivi
-            strada_piedi_1 = get_route_geometry(c_p, co_fp)
-            strada_bus = get_route_geometry(co_fp, co_fa)
-            strada_piedi_2 = get_route_geometry(co_fa, c_a)
+            # Calcolo dei percorsi stradali reali e dei tempi reali
+            strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
+            strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
+            strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
             
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
                 "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2
             }
-            st.success(f"🚏 **Percorso trovato!** Cammina fino a '{n_fp}' ({round(d_p*15)} min), prendi il bus fino a '{n_fa}' e prosegui a piedi ({round(d_a*15)} min).")
+            
+            st.success(f"🚏 **Percorso trovato!**\n"
+                       f"* 🚶‍♂️ Cammina fino alla fermata **{n_fp}** (~{t_p1} min).\n"
+                       f"* 🚌 Prendi il bus fino alla fermata **{n_fa}** (~{t_bus} min di viaggio).\n"
+                       f"* 🚶‍♂️ Scendi e prosegui a piedi fino a destinazione (~{t_p2} min).\n"
+                       f"⏱️ **Tempo totale stimato:** ~{t_p1 + t_bus + t_p2} minuti.")
         else: 
-            st.error("Indirizzi non trovati. Prova a digitare semplicemente il nome della via (es: 'Barozzi' o 'Morane').")
+            st.error("Indirizzi non trovati.")
 
 with mc2:
     m = folium.Map(location=[44.6471, 10.9252], zoom_start=13)
@@ -121,10 +132,10 @@ with mc2:
         folium.Marker(rd["cfp"], popup=rd["nfp"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
         folium.Marker(rd["cfa"], popup=rd["nfa"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
         
-        # Disegno dei percorsi reali ricalcati sulle strade cittadine
-        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="Tratto a piedi").add_to(m)
-        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip="Tratto in Autobus").add_to(m)
-        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="Tratto a piedi").add_to(m)
+        # Disegno delle linee stradali esatte sulla mappa
+        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
+        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip="In Autobus").add_to(m)
+        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
         
     for _, r in df_bus.dropna(subset=["lat", "lon"]).iterrows():
         folium.Marker([r["lat"], r["lon"]], popup=r["Linea"], icon=folium.Icon(color="darkred", icon="circle")).add_to(m)
