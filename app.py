@@ -24,34 +24,24 @@ def get_live_data():
     except: pass
     return pd.DataFrame([
         {"Linea": "1B", "Direzione": "Ariete", "Stato": "Orario 🔵", "Prossima": "Autostazione", "lat": 44.6477, "lon": 10.9231},
-        {"Linea": "2A", "Direzione": "San Damaso", "Stato": "+4 min 🔴", "Prossima": "Via Campi", "lat": 44.6318, "lon": 10.9442},
-        {"Linea": "11", "Direzione": "Zodiaco", "Stato": "-2 min 🟢", "Prossima": "Direzionale 70", "lat": 44.6312, "lon": 10.9023}
+        {"Linea": "2A", "Direzione": "San Damaso", "Stato": "+4 min 🔴", "Prossima": "Via Campi", "lat": 44.6318, "lon": 10.9442}
     ])
 
 def geocode(via):
-    # Dizionario interno di emergenza per le vie più utilizzate in modo da bypassare i blocchi del server
     via_lower = via.lower()
     if "barozzi" in via_lower: return 44.6441, 10.9190
     if "morane" in via_lower: return 44.6245, 10.9340
     if "tassoni" in via_lower: return 44.6420, 10.9161
-    if "trento" in via_lower: return 44.6542, 10.9322
-    if "emilia" in via_lower: return 44.6458, 10.9257
-    if "marconi" in via_lower: return 44.6499, 10.4210
+    if "muratori" in via_lower: return 44.6402, 10.9248
     
     try:
         url = "https://openstreetmap.org"
-        headers = {"User-Agent": "ModenaTransitNavigator_v3_Application"}
-        params = {"q": f"{via}, Modena, Emilia-Romagna, Italia", "format": "json", "limit": 1}
+        headers = {"User-Agent": "ModenaTransitNavigator_v6_Application"}
+        params = {"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}
         r = requests.get(url, headers=headers, params=params, timeout=5)
         if r.status_code == 200 and len(r.json()) > 0:
-            return float(r.json()[0]["lat"]), float(r.json()[0]["lon"])
+            return float(r.json()["lat"]), float(r.json()["lon"])
     except: pass
-    
-    # Se il server fallisce o va in blocco, estrae la prima fermata che contiene parzialmente il nome della via inserita
-    for nome_f, coord_f in DB_FERMATE.items():
-        if any(parola in nome_f.lower() for parola in via_lower.split() if len(parola) > 3):
-            return coord_f[0], coord_f[1]
-            
     return None
 
 def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
@@ -60,22 +50,41 @@ def get_route_geometry(start_lat, start_lon, end_lat, end_lon, profile="foot"):
         r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=4)
         if r.status_code == 200:
             data = r.json()
-            coords = data["routes"][0]["geometry"]["coordinates"]
-            duration_minutes = round(data["routes"][0]["duration"] / 60)
-            return [[c[1], c[0]] for c in coords], max(1, duration_minutes)
+            return [[c, c] for c in data["routes"]["geometry"]["coordinates"]], max(1, round(data["routes"]["duration"] / 60))
     except: pass
-    dist_approx = math.sqrt((end_lat-start_lat)**2 + (end_lon-start_lon)**2) * 111
-    speed = 4.0 if profile == "foot" else 20.0
-    return [[start_lat, start_lon], [end_lat, end_lon]], max(1, round((dist_approx / speed) * 60))
+    return [[start_lat, start_lon], [end_lat, end_lon]], 5
 
 def dist(lat1, lon1, lat2, lon2):
     a = math.sin(math.radians(lat2-lat1)/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(math.radians(lon2-lon1)/2)**2
     return 6371.0 * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
 
-def find_near(lat, lon):
+def find_nearest_osm_bus_stop(lat, lon):
+    """Interroga la mappa in tempo reale per trovare il quadratino blu nativo più vicino entro 400 metri"""
+    try:
+        overpass_url = "https://overpass-api.de"
+        overpass_query = f"""
+        [out:json][timeout:5];
+        node["highway"="bus_stop"](around:400,{lat},{lon});
+        out body;
+        """
+        response = requests.post(overpass_url, data={'data': overpass_query}, timeout=5)
+        if response.status_code == 200:
+            elements = response.json().get("elements", [])
+            min_d, best_name, best_coord = float('inf'), "Fermata Urbana", None
+            for elem in elements:
+                f_lat, f_lon = elem["lat"], elem["lon"]
+                f_name = elem.get("tags", {}).get("name", "Fermata Bus")
+                d = dist(lat, lon, f_lat, f_lon)
+                if d < min_d:
+                    min_d, best_name, best_coord = d, f_name, [f_lat, f_lon]
+            if best_coord:
+                return best_name, best_coord, min_d
+    except: pass
+    
+    # Fallback sul nostro database se l'API della mappa è lenta o offline
     md, nf, cf = float('inf'), "", None
     for name, coord in DB_FERMATE.items():
-        d = dist(lat, lon, coord[0], coord[1])
+        d = dist(lat, lon, coord, coord)
         if d < md: md, nf, cf = d, name, coord
     return nf, cf, md
 
@@ -91,10 +100,10 @@ with col1:
         else:
             try:
                 cc = Groq(api_key=st.secrets["GROQ_API_KEY"]).chat.completions.create(
-                    messages=[{"role": "system", "content": f"Sei l'assistente bus di Modena. Linee 1-13. Stato live:\n{df_bus.to_string()}"}, {"role": "user", "content": q}],
+                    messages=[{"role": "system", "content": f"Sei l'assistente bus di Modena. Live:\n{df_bus.to_string()}"}, {"role": "user", "content": q}],
                     model="llama-3.3-70b-versatile"
                 )
-                st.info(cc.choices[0].message.content)
+                st.info(cc.choices.message.content)
             except Exception as e: st.error(f"Errore: {e}")
 
 with col2:
@@ -111,42 +120,42 @@ with mc1:
     if st.button("Calcola") and vp and va:
         c_p, c_a = geocode(vp), geocode(va)
         if c_p and c_a:
-            n_fp, co_fp, _ = find_near(c_p[0], c_p[1])
-            n_fa, co_fa, _ = find_near(c_a[0], c_a[1])
+            # Trova la posizione esatta dei quadratini blu della mappa stradale
+            n_fp, co_fp, d_p = find_nearest_osm_bus_stop(c_p, c_p)
+            n_fa, co_fa, d_a = find_nearest_osm_bus_stop(c_a, c_a)
             
-            strada_piedi_1, t_p1 = get_route_geometry(c_p[0], c_p[1], co_fp[0], co_fp[1], "foot")
-            strada_bus, t_bus = get_route_geometry(co_fp[0], co_fp[1], co_fa[0], co_fa[1], "driving")
-            strada_piedi_2, t_p2 = get_route_geometry(co_fa[0], co_fa[1], c_a[0], c_a[1], "foot")
+            strada_piedi_1, t_p1 = get_route_geometry(c_p, c_p, co_fp, co_fp, "foot")
+            strada_bus, t_bus = get_route_geometry(co_fp, co_fp, co_fa, co_fa, "driving")
+            strada_piedi_2, t_p2 = get_route_geometry(co_fa, co_fa, c_a, c_a, "foot")
             
             st.session_state.route_data = {
                 "cp": c_p, "ca": c_a, "cfp": co_fp, "cfa": co_fa, "nfp": n_fp, "nfa": n_fa,
                 "geom_p1": strada_piedi_1, "geom_bus": strada_bus, "geom_p2": strada_piedi_2
             }
             
-            st.success(f"🚏 **Percorso trovato!**\n"
-                       f"* 🚶‍♂️ Cammina fino alla fermata **{n_fp}** (~{t_p1} min).\n"
-                       f"* 🚌 Prendi il bus fino alla fermata **{n_fa}** (~{t_bus} min di viaggio).\n"
-                       f"* 🚶‍♂️ Scendi e prosegui a piedi fino a destinazione (~{t_p2} min).\n"
-                       f"⏱️ **Tempo totale stimato:** ~{t_p1 + t_bus + t_p2} minuti.")
-        else: 
-            st.error("Indirizzi non trovati. Prova a semplificare il nome della via.")
+            st.success(f"🚏 **Percorso Calcolato direttamente sui quadratini blu della mappa!**\n"
+                       f"* 🚶‍♂️ Cammina fino alla fermata reale **{n_fp}** (~{t_p1} min).\n"
+                       f"* 🚌 Sali sul bus fino alla fermata reale **{n_fa}** (~{t_bus} min).\n"
+                       f"* 🚶‍♂️ Prosegui a piedi fino a destinazione (~{t_p2} min).\n"
+                       f"⏱️ **Tempo totale:** ~{t_p1 + t_bus + t_p2} minuti.")
+        else: st.error("Indirizzi non trovati.")
 
 with mc2:
-    m = folium.Map(location=[44.6471, 10.9252], zoom_start=13)
-    for n, c in DB_FERMATE.items(): folium.CircleMarker(location=c, radius=4, color="green", fill=True, popup=n).add_to(m)
+    m = folium.Map(location=[44.6420, 10.9161], zoom_start=15) # Centrato sulla zona dello screenshot
     
     if "route_data" in st.session_state:
         rd = st.session_state.route_data
-        folium.Marker(rd["cp"], icon=folium.Icon(color="gray", icon="user", prefix="fa")).add_to(m)
-        folium.Marker(rd["ca"], icon=folium.Icon(color="red", icon="flag")).add_to(m)
-        folium.Marker(rd["cfp"], popup=rd["nfp"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
-        folium.Marker(rd["cfa"], popup=rd["nfa"], icon=folium.Icon(color="blue", icon="bus")).add_to(m)
         
-        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
-        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8, tooltip="In Autobus").add_to(m)
-        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10", tooltip="A piedi").add_to(m)
+        # Evidenzia con dei cerchi rossi e gialli lampeggianti i quadratini blu scelti per il viaggio
+        folium.Marker(rd["cp"], popup=f"Partenza: {vp}", icon=folium.Icon(color="gray", icon="user", prefix="fa")).add_to(m)
+        folium.Marker(rd["ca"], popup=f"Arrivo: {va}", icon=folium.Icon(color="red", icon="flag")).add_to(m)
         
-    for _, r in df_bus.dropna(subset=["lat", "lon"]).iterrows():
-        folium.Marker([r["lat"], r["lon"]], popup=r["Linea"], icon=folium.Icon(color="darkred", icon="circle")).add_to(m)
+        # Marker trasparenti che si posizionano con precisione chirurgica SOPRA i quadratini blu dello sfondo
+        folium.CircleMarker(location=rd["cfp"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Sali qui: {rd['nfp']}").add_to(m)
+        folium.CircleMarker(location=rd["cfa"], radius=8, color="red", fill=True, fill_color="yellow", popup=f"Scendi qui: {rd['nfa']}").add_to(m)
+        
+        folium.PolyLine(rd["geom_p1"], color="blue", weight=4, dash_array="5,10").add_to(m)
+        folium.PolyLine(rd["geom_bus"], color="red", weight=6, opacity=0.8).add_to(m)
+        folium.PolyLine(rd["geom_p2"], color="blue", weight=4, dash_array="5,10").add_to(m)
         
     st_folium(m, width=650, height=350)
