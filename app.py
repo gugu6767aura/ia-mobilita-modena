@@ -7,9 +7,14 @@ from groq import Groq
 from streamlit_folium import st_folium
 from fermate import DB_FERMATE 
 
-st.set_page_config(page_title="IA Mobilità Modena", page_icon="🚌", layout="wide")
+st.set_page_config(
+    page_title="IA Mobilità Modena", 
+    page_icon="🚌", 
+    layout="wide"
+)
 st.title("🚌 Assistente IA Mobilità - Modena")
 
+# Inizializzazione del database delle fermate nello stato dell'applicazione
 if "fermate_pers" not in st.session_state:
     st.session_state.fermate_pers = DB_FERMATE.copy()
 
@@ -18,21 +23,29 @@ def get_live_data():
     try:
         url = "https://setaweb.it"
         r = requests.get(url, timeout=3, verify=False)
-        if r.status_code == 200 and "application/json" in r.headers.get("Content-Type", ""):
+        is_json = "application/json" in r.headers.get("Content-Type", "")
+        if r.status_code == 200 and is_json:
             l = []
             for _, info in r.json().get("corse", {}).items():
                 rit = int(info.get("ritardo", 0))
-                st_b = f"+{rit} min 🔴" if rit > 0 else (f"-{abs(rit)} min 🟢" if rit < 0 else "Orario 🔵")
+                if rit > 0: stato = f"+{rit} min 🔴"
+                elif rit < 0: stato = f"-{abs(rit)} min 🟢"
+                else: stato = "Orario 🔵"
                 l.append({
-                    "Linea": info.get("linea"), "Direzione": info.get("capolinea_destinazione"),
-                    "Stato": st_b, "Prossima": info.get("prossima_fermata_descrizione"),
-                    "lat": float(info.get("lat")) / 100000.0, "lon": float(info.get("lon")) / 100000.0
+                    "Linea": info.get("linea"), 
+                    "Direzione": info.get("capolinea_destinazione"),
+                    "Stato": stato,
+                    "Prossima": info.get("prossima_fermata_descrizione"),
+                    "lat": float(info.get("lat")) / 100000.0, 
+                    "lon": float(info.get("lon")) / 100000.0
                 })
             return pd.DataFrame(l)
     except: pass
     return pd.DataFrame([
-        {"Linea": "1B", "Direzione": "Ariete", "Stato": "Orario 🔵", "Prossima": "Autostazione", "lat": 44.6477, "lon": 10.9231},
-        {"Linea": "2A", "Direzione": "San Damaso", "Stato": "+4 min 🔴", "Prossima": "Via Campi", "lat": 44.6318, "lon": 10.9442}
+        {"Linea": "1B", "Direzione": "Ariete", "Stato": "Orario 🔵", 
+         "Prossima": "Autostazione", "lat": 44.6477, "lon": 10.9231},
+        {"Linea": "2A", "Direzione": "San Damaso", "Stato": "+4 min 🔴", 
+         "Prossima": "Via Campi", "lat": 44.6318, "lon": 10.9442}
     ])
 
 def geocode(via):
@@ -44,7 +57,7 @@ def geocode(via):
     if "giardini" in v: return 44.6295, 10.9124
     try:
         url = "https://openstreetmap.org"
-        h = {"User-Agent": "IA_Modena_v10"}
+        h = {"User-Agent": "IA_Modena_v11"}
         p = {"q": f"{via}, Modena, Italia", "format": "json", "limit": 1}
         r = requests.get(url, headers=h, params=p, timeout=5)
         if r.status_code == 200 and len(r.json()) > 0:
@@ -63,7 +76,7 @@ def get_route_geometry(slat, slon, elat, elon, profile="foot"):
             data = r.json()
             if "routes" in data and len(data["routes"]) > 0:
                 coords = data["routes"][0]["geometry"]["coordinates"]
-                # FIX CRITICO: Inverte correttamente [longitudine, latitudine] in [lat, lon] per Folium
+                # FIX CRITICO: Converte [lon, lat] di OSRM nel formato [lat, lon] di Folium
                 geom = [[pt[1], pt[0]] for pt in coords]
                 dur = max(1, round(data["routes"][0]["duration"] / 60))
                 return geom, dur
@@ -104,7 +117,7 @@ def guess_best_bus_line(slat, slon, bus_df):
         if d < md: md, bl = d, row['Linea']
     return bl
 
-# --- INTERFACCIA ---
+# --- INTERFACCIA UTENTE ---
 df_bus = get_live_data()
 col1, col2 = st.columns(2)
 
@@ -118,7 +131,8 @@ with col1:
             try:
                 sys_msg = f"Sei l'assistente bus. Live:\n{df_bus.to_string()}"
                 cc = Groq(api_key=st.secrets["GROQ_API_KEY"]).chat.completions.create(
-                    messages=[{"role": "system", "content": sys_msg}, {"role": "user", "content": q}],
+                    messages=[{"role": "system", "content": sys_msg}, 
+                              {"role": "user", "content": q}],
                     model="llama-3.3-70b-versatile"
                 )
                 st.info(cc.choices.message.content)
@@ -126,7 +140,8 @@ with col1:
 
 with col2:
     st.subheader("📊 Tabellone Live")
-    st.dataframe(df_bus[["Linea", "Direzione", "Stato", "Prossima"]], use_container_width=True, hide_index=True)
+    cols = ["Linea", "Direzione", "Stato", "Prossima"]
+    st.dataframe(df_bus[cols], use_container_width=True, hide_index=True)
 
 st.markdown("---")
 mc1, mc2, mc3 = st.columns([1.5, 2, 1.5])
@@ -138,7 +153,6 @@ with mc1:
     if st.button("Calcola") and vp and va:
         cp, ca = geocode(vp), geocode(va)
         if cp and ca:
-            # FIX: Passaggio corretto di latitudine e longitudine indicizzate
             n_fp, co_fp, _ = find_nearest_osm_bus_stop(cp[0], cp[1])
             n_fa, co_fa, _ = find_nearest_osm_bus_stop(ca[0], ca[1])
             linea = guess_best_bus_line(co_fp[0], co_fp[1], df_bus)
@@ -152,10 +166,16 @@ with mc1:
                 "nfp": n_fp, "nfa": n_fa, "gp1": geo_p1, "gb": geo_b, 
                 "gp2": geo_p2, "l": linea, "t": (tp1 + tb + tp2)
             }
-            st.success(f"🚏 **Trovato!** Cammina a **{n_fp}**, bus **{linea}** fino a **{n_fa}**. Tempo: ~{tp1+tb+tp2} min.")
+            st.success(f"🚏 **Trovato!** Cammina a **{n_fp}**, bus **{linea}** fino a **{n_fa}**.")
         else:
             if "route_data" in st.session_state: del st.session_state.route_data
             st.error("Indirizzi non trovati.")
+            
+    # Integrazione pulsante Google Maps esterno (Sempre funzionante e gratuito)
+    if "route_data" in st.session_state:
+        rd = st.session_state.route_data
+        url_gmaps = f"https://google.com{rd['cp'][0]},{rd['cp'][1]}&destination={rd['ca'][0]},{rd['ca'][1]}&travelmode=transit"
+        st.link_button("🗺️ Apri e Naviga su Google Maps", url_gmaps, use_container_width=True)
 
 with mc3:
     st.subheader("🚏 Gestione Fermate")
@@ -175,15 +195,22 @@ with mc3:
 with mc2:
     st.subheader("🗺️ Mappa Live")
     m = folium.Map(location=[44.6420, 10.9161], zoom_start=14)
+    
+    # Mostra i marker delle fermate caricate
     for n, c in st.session_state.fermate_pers.items():
         folium.Marker(c, popup=n, icon=folium.Icon(color="blue", icon="bus", prefix="fa")).add_to(m)
+        
     if "route_data" in st.session_state:
         rd = st.session_state.route_data
         folium.Marker(rd["cp"], popup="Partenza", icon=folium.Icon(color="gray")).add_to(m)
         folium.Marker(rd["ca"], popup="Arrivo", icon=folium.Icon(color="red")).add_to(m)
+        
+        # Linee stradali corrette che agganciano i punti esatti
         folium.PolyLine(rd["gp1"], color="blue", weight=4, opacity=0.7).add_to(m)
         folium.PolyLine(rd["gb"], color="green", weight=6, opacity=0.8).add_to(m)
         folium.PolyLine(rd["gp2"], color="blue", weight=4, opacity=0.7).add_to(m)
+        
         folium.CircleMarker(rd["cfp"], radius=8, color="orange", fill=True).add_to(m)
         folium.CircleMarker(rd["cfa"], radius=8, color="orange", fill=True).add_to(m)
+        
     st_folium(m, use_container_width=True, height=500)
